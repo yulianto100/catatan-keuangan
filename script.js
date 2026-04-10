@@ -6,29 +6,26 @@ let data = [];
 let deleteIndex = null;
 let selectedKategori = [];
 
+// 🔥 REALTIME
+function loadData() {
+  db.ref("keuangan").on("value", snapshot => {
+    data = snapshot.val() || [];
+    render();
+    generateKategoriFilter();
+  });
+}
+
+function saveData() {
+  db.ref("keuangan").set(data);
+}
+
 window.onload = () => {
-  loadCloud();
+  loadData();
   document.getElementById("tanggal").valueAsDate = new Date();
   initSheetDrag();
 };
 
-//////////////////////////////
-// 🔥 LOCAL STORAGE
-//////////////////////////////
-function saveLocal() {
-  localStorage.setItem("keuangan", JSON.stringify(data));
-}
-
-function loadLocal() {
-  let local = localStorage.getItem("keuangan");
-  if (local) {
-    data = JSON.parse(local);
-  }
-}
-
-//////////////////////////////
 // FORMAT
-//////////////////////////////
 function formatRupiah(n) {
   return n.toLocaleString("id-ID");
 }
@@ -37,65 +34,7 @@ function formatTanggal(t) {
   return new Date(t).toISOString().split("T")[0];
 }
 
-//////////////////////////////
-// 🔥 LOAD HYBRID
-//////////////////////////////
-async function loadCloud() {
-  // 🔥 ambil dari local dulu (biar cepet)
-  loadLocal();
-  render();
-  generateKategoriFilter();
-
-  // 🔥 lalu sync dari cloud
-  try {
-    let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-      headers: { "X-Master-Key": API_KEY }
-    });
-
-    let json = await res.json();
-    data = json.record?.data || [];
-
-    saveLocal(); // update local
-    render();
-    generateKategoriFilter();
-
-  } catch {
-    console.log("📴 Offline mode");
-  }
-}
-
-//////////////////////////////
-// SAVE CLOUD
-//////////////////////////////
-async function saveCloud() {
-  try {
-    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Master-Key": API_KEY
-      },
-      body: JSON.stringify({ data })
-    });
-  } catch {
-    console.log("❌ Gagal sync JSONBin");
-  }
-}
-
-//////////////////////////////
-// 🔥 SYNC GOOGLE SHEET (AMAN)
-//////////////////////////////
-function syncToSheet() {
-  fetch(SHEET_API, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain" },
-    body: JSON.stringify(data)
-  }).catch(() => {});
-}
-
-//////////////////////////////
 // TAMBAH
-//////////////////////////////
 function tambahData() {
   let nama = document.getElementById("nama").value;
   let nominal = parseInt(document.getElementById("nominal").value);
@@ -108,15 +47,8 @@ function tambahData() {
 
   data.unshift({ nama, nominal, kategori, tipe, wallet, tanggal });
 
-  render();
-  generateKategoriFilter();
+  saveData();
 
-  // 🔥 SIMPAN KE SEMUA
-  saveLocal();
-  saveCloud();
-  setTimeout(syncToSheet, 500);
-
-  // reset form
   document.getElementById("nama").value = "";
   document.getElementById("nominal").value = "";
   document.getElementById("tanggal").valueAsDate = new Date();
@@ -124,9 +56,7 @@ function tambahData() {
   closeSheet();
 }
 
-//////////////////////////////
 // DELETE
-//////////////////////////////
 function openDelete(index) {
   deleteIndex = index;
   document.getElementById("popup").style.display = "flex";
@@ -134,14 +64,7 @@ function openDelete(index) {
 
 function confirmDelete() {
   data.splice(deleteIndex, 1);
-
-  render();
-  generateKategoriFilter();
-
-  saveLocal();
-  saveCloud();
-  setTimeout(syncToSheet, 500);
-
+  saveData();
   closePopup();
 }
 
@@ -149,9 +72,7 @@ function closePopup() {
   document.getElementById("popup").style.display = "none";
 }
 
-//////////////////////////////
 // RENDER
-//////////////////////////////
 function render(listData = data) {
   let list = document.getElementById("list");
   list.innerHTML = "";
@@ -171,19 +92,10 @@ function render(listData = data) {
 
     list.innerHTML += `
       <div class="item">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <b>${item.nama}</b><br>
-            <small>${item.kategori} • ${formatTanggal(item.tanggal)}</small>
-          </div>
-
-          <div style="text-align:right">
-            <b style="color:${warna}">Rp ${formatRupiah(item.nominal)}</b><br>
-            <button onclick="openDelete(${i})" style="background:#ef4444;margin-top:5px;width:auto;padding:6px 10px;">
-              🗑️
-            </button>
-          </div>
-        </div>
+        <b>${item.nama}</b>
+        <small>${item.kategori} • ${formatTanggal(item.tanggal)}</small>
+        <b style="float:right;color:${warna}">Rp ${formatRupiah(item.nominal)}</b>
+        <button onclick="openDelete(${i})">🗑️</button>
       </div>
     `;
   });
@@ -195,9 +107,7 @@ function render(listData = data) {
   renderLaporan(listData);
 }
 
-//////////////////////////////
 // LAPORAN
-//////////////////////////////
 function renderLaporan(listData = data) {
   let masukMap = {}, keluarMap = {};
 
@@ -213,26 +123,18 @@ function renderLaporan(listData = data) {
   masukEl.innerHTML = "<h4>⬆️ Pemasukan</h4>";
 
   for (let k in masukMap) {
-    masukEl.innerHTML += `<div style="background:#064e3b;padding:10px;border-radius:10px;margin-bottom:6px">
-      <span>${k}</span>
-      <b style="float:right;color:#4ade80">Rp ${formatRupiah(masukMap[k])}</b>
-    </div>`;
+    masukEl.innerHTML += `<div>${k} <b>Rp ${formatRupiah(masukMap[k])}</b></div>`;
   }
 
   let keluarEl = document.getElementById("laporanKeluar");
   keluarEl.innerHTML = "<h4>⬇️ Pengeluaran</h4>";
 
   for (let k in keluarMap) {
-    keluarEl.innerHTML += `<div style="background:#7f1d1d;padding:10px;border-radius:10px;margin-bottom:6px">
-      <span>${k}</span>
-      <b style="float:right;color:#f87171">Rp ${formatRupiah(keluarMap[k])}</b>
-    </div>`;
+    keluarEl.innerHTML += `<div>${k} <b>Rp ${formatRupiah(keluarMap[k])}</b></div>`;
   }
 }
 
-//////////////////////////////
 // FILTER
-//////////////////////////////
 function toggleFilter() {
   let panel = document.getElementById("filterPanel");
   panel.style.display = panel.style.display === "block" ? "none" : "block";
@@ -243,63 +145,28 @@ function generateKategoriFilter() {
   let unik = [...new Set(data.map(d => d.kategori))];
 
   container.innerHTML = "";
-
   unik.forEach(k => {
-    container.innerHTML += `
-      <label>
-        <input type="checkbox" value="${k}" onchange="updateKategori(this)">
-        ${k}
-      </label><br>
-    `;
+    container.innerHTML += `<label><input type="checkbox" value="${k}" onchange="updateKategori(this)"> ${k}</label><br>`;
   });
 }
 
 function updateKategori(el) {
-  if (el.checked) {
-    selectedKategori.push(el.value);
-  } else {
-    selectedKategori = selectedKategori.filter(k => k !== el.value);
-  }
+  if (el.checked) selectedKategori.push(el.value);
+  else selectedKategori = selectedKategori.filter(k => k !== el.value);
 }
 
 function applyFilter() {
-  let from = document.getElementById("fromMonth").value;
-  let to = document.getElementById("toMonth").value;
-
-  let filtered = data.filter(d => {
-    let bulan = new Date(d.tanggal).toISOString().slice(0,7);
-
-    return (!from || bulan >= from) &&
-           (!to || bulan <= to) &&
-           (selectedKategori.length === 0 || selectedKategori.includes(d.kategori));
-  });
-
-  render(filtered);
+  render(data);
   document.getElementById("filterPanel").style.display = "none";
 }
 
 function resetFilter() {
-  document.getElementById("fromMonth").value = "";
-  document.getElementById("toMonth").value = "";
   selectedKategori = [];
-
-  generateKategoriFilter();
   render();
   document.getElementById("filterPanel").style.display = "none";
 }
 
-//////////////////////////////
-// AUTO SYNC SAAT ONLINE
-//////////////////////////////
-window.addEventListener("online", () => {
-  console.log("🌐 Online lagi, sync...");
-  saveCloud();
-  syncToSheet();
-});
-
-//////////////////////////////
-// SHEET UI
-//////////////////////////////
+// SHEET
 function openSheet() {
   document.getElementById("sheet").classList.add("active");
 }
@@ -308,9 +175,6 @@ function closeSheet() {
   document.getElementById("sheet").classList.remove("active");
 }
 
-//////////////////////////////
-// DRAG SHEET
-//////////////////////////////
 function initSheetDrag() {
   let sheet = document.getElementById("sheet");
   let dragBar = document.getElementById("dragBar");
