@@ -5,7 +5,6 @@
   <title>Keuangan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- 🔥 PWA -->
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#22c55e">
 
@@ -15,7 +14,25 @@
 <body>
 
 <div class="app">
-  <h2>💰 Keuangan</h2>
+  <h2>💰 Keuangan 
+    <button onclick="toggleFilter()" style="float:right">⚙️</button>
+  </h2>
+
+  <!-- FILTER -->
+  <div id="filterPanel" style="display:none;margin-bottom:10px;">
+    
+    <label>Dari Bulan</label>
+    <input type="month" id="fromMonth">
+
+    <label>Sampai Bulan</label>
+    <input type="month" id="toMonth">
+
+    <label>Kategori</label>
+    <div id="filterKategori"></div>
+
+    <button onclick="applyFilter()">Terapkan</button>
+    <button class="btn-close" onclick="resetFilter()">Reset</button>
+  </div>
 
   <div class="saldo-card">
     <p>Saldo</p>
@@ -33,8 +50,6 @@
     <div id="laporanKeluar"></div>
   </div>
 
-  <input type="month" id="filterBulan" onchange="filterBulan()">
-
   <div id="list" class="list"></div>
 
   <button class="fab" onclick="openSheet()">＋</button>
@@ -51,10 +66,23 @@
       <input type="number" id="nominal" placeholder="Nominal">
 
       <select id="kategori">
-        <option>Food</option>
-        <option>Transport</option>
-        <option>Salary</option>
+        <option>Bills</option>
+        <option>Clothes</option>
+        <option>Communication</option>
+        <option>Eating Out</option>
         <option>Entertainment</option>
+        <option>Food</option>
+        <option>Gifts</option>
+        <option>Health</option>
+        <option>House</option>
+        <option>Jajan Mas</option>
+        <option>Motorcycle</option>
+        <option>Sports</option>
+        <option>Toiletry</option>
+        <option>Transport</option>
+        <option>Deposits</option>
+        <option>Salary</option>
+        <option>Saving</option>
       </select>
 
       <select id="tipe">
@@ -86,7 +114,6 @@
 
 <script src="script.js"></script>
 
-<!-- 🔥 REGISTER SW -->
 <script>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/service-worker.js');
