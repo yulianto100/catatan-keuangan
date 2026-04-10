@@ -2,7 +2,6 @@ const BIN_ID = "69d7469b36566621a893076b";
 const API_KEY = "$2a$10$muEfJZR3SbcfGp/bnvG70OkpHIiWIScvYv3F18/flHtGPmAjFzilu";
 const SHEET_API = "https://script.google.com/macros/s/AKfycbyuxRrgiCMZJk_Kuj8wQJHOmzPxFmFhxUloWN7XqffdgVX9ZA5xw_HwUuVvo0jEuOXn/exec";
 
-
 let data = [];
 let deleteIndex = null;
 let selectedKategori = [];
@@ -24,8 +23,8 @@ function formatTanggal(t) {
 
 // LOAD
 async function loadCloud() {
-  let res = await fetch(`https://api.jsonbin.io/v3/b/69d7469b36566621a893076b/latest`, {
-    headers: { "X-Master-Key": "$2a$10$muEfJZR3SbcfGp/bnvG70OkpHIiWIScvYv3F18/flHtGPmAjFzilu" }
+  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: { "X-Master-Key": API_KEY }
   });
 
   let json = await res.json();
@@ -35,16 +34,29 @@ async function loadCloud() {
   generateKategoriFilter();
 }
 
-// SAVE
+// SAVE JSONBIN
 async function saveCloud() {
-  await fetch(`https://api.jsonbin.io/v3/b/69d7469b36566621a893076b`, {
+  await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      "X-Master-Key": "$2a$10$muEfJZR3SbcfGp/bnvG70OkpHIiWIScvYv3F18/flHtGPmAjFzilu"
+      "X-Master-Key": API_KEY
     },
     body: JSON.stringify({ data })
   });
+}
+
+// 🔥 SYNC GOOGLE SHEET (FIX UTAMA)
+async function syncToSheet() {
+  try {
+    await fetch(SHEET_API, {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
+    console.log("✅ Sync ke Google Sheet berhasil");
+  } catch (err) {
+    console.log("❌ Sync gagal:", err);
+  }
 }
 
 // TAMBAH
@@ -62,14 +74,16 @@ function tambahData() {
 
   render();
   generateKategoriFilter();
-  saveCloud();
 
-  // 🔥 RESET FORM
+  saveCloud();
+  syncToSheet(); // 🔥 WAJIB
+
+  // RESET FORM
   document.getElementById("nama").value = "";
   document.getElementById("nominal").value = "";
   document.getElementById("tanggal").valueAsDate = new Date();
 
-  closeSheet(); // balik ke halaman utama
+  closeSheet();
 }
 
 // DELETE
@@ -80,9 +94,13 @@ function openDelete(index) {
 
 function confirmDelete() {
   data.splice(deleteIndex, 1);
+
   render();
   generateKategoriFilter();
+
   saveCloud();
+  syncToSheet(); // 🔥 WAJIB
+
   closePopup();
 }
 
@@ -90,7 +108,7 @@ function closePopup() {
   document.getElementById("popup").style.display = "none";
 }
 
-// RENDER LIST
+// RENDER
 function render(listData = data) {
   let list = document.getElementById("list");
   list.innerHTML = "";
@@ -111,7 +129,6 @@ function render(listData = data) {
     list.innerHTML += `
       <div class="item">
         <div style="display:flex;justify-content:space-between;align-items:center">
-          
           <div>
             <b>${item.nama}</b><br>
             <small>${item.kategori} • ${formatTanggal(item.tanggal)}</small>
@@ -123,7 +140,6 @@ function render(listData = data) {
               🗑️
             </button>
           </div>
-
         </div>
       </div>
     `;
@@ -136,7 +152,7 @@ function render(listData = data) {
   renderLaporan(listData);
 }
 
-// 🔥 LAPORAN (BEDA STYLE)
+// LAPORAN
 function renderLaporan(listData = data) {
   let masukMap = {}, keluarMap = {};
 
@@ -171,107 +187,4 @@ function renderLaporan(listData = data) {
       </div>
     `;
   }
-}
-
-// FILTER
-function toggleFilter() {
-  let panel = document.getElementById("filterPanel");
-  panel.style.display = panel.style.display === "block" ? "none" : "block";
-}
-
-function generateKategoriFilter() {
-  let container = document.getElementById("filterKategori");
-  let unik = [...new Set(data.map(d => d.kategori))];
-
-  container.innerHTML = "";
-
-  unik.forEach(k => {
-    container.innerHTML += `
-      <label>
-        <input type="checkbox" value="${k}" onchange="updateKategori(this)">
-        ${k}
-      </label><br>
-    `;
-  });
-}
-
-function updateKategori(el) {
-  if (el.checked) {
-    selectedKategori.push(el.value);
-  } else {
-    selectedKategori = selectedKategori.filter(k => k !== el.value);
-  }
-}
-
-function applyFilter() {
-  let from = document.getElementById("fromMonth").value;
-  let to = document.getElementById("toMonth").value;
-
-  let filtered = data.filter(d => {
-    let bulan = new Date(d.tanggal).toISOString().slice(0,7);
-
-    let okBulan =
-      (!from || bulan >= from) &&
-      (!to || bulan <= to);
-
-    let okKategori =
-      selectedKategori.length === 0 ||
-      selectedKategori.includes(d.kategori);
-
-    return okBulan && okKategori;
-  });
-
-  render(filtered);
-
-  // 🔥 AUTO CLOSE FILTER
-  document.getElementById("filterPanel").style.display = "none";
-}
-
-function resetFilter() {
-  document.getElementById("fromMonth").value = "";
-  document.getElementById("toMonth").value = "";
-  selectedKategori = [];
-
-  generateKategoriFilter();
-  render();
-
-  // 🔥 AUTO CLOSE
-  document.getElementById("filterPanel").style.display = "none";
-}
-
-// SHEET
-function openSheet() {
-  document.getElementById("sheet").classList.add("active");
-}
-
-function closeSheet() {
-  document.getElementById("sheet").classList.remove("active");
-}
-
-// DRAG
-function initSheetDrag() {
-  let sheet = document.getElementById("sheet");
-  let dragBar = document.getElementById("dragBar");
-
-  let startY = 0;
-
-  dragBar.addEventListener("touchstart", e => {
-    startY = e.touches[0].clientY;
-  });
-
-  dragBar.addEventListener("touchmove", e => {
-    let move = e.touches[0].clientY - startY;
-
-    if (move > 0) {
-      sheet.style.transform = `translateY(${move}px)`;
-    }
-  });
-
-  dragBar.addEventListener("touchend", e => {
-    let move = e.changedTouches[0].clientY - startY;
-
-    if (move > 100) closeSheet();
-
-    sheet.style.transform = "translateY(0)";
-  });
 }
