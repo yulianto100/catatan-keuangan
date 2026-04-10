@@ -5,8 +5,10 @@
   <title>Keuangan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- 🔥 WAJIB PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#22c55e">
+
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -15,12 +17,6 @@
 <div class="app">
 
   <h2>💰 Keuangan</h2>
-
-  <!-- 🔥 MULTI DATABASE -->
-  <div style="margin-bottom:12px">
-    <select id="groupSelect"></select>
-    <button onclick="createGroup()">+ Database</button>
-  </div>
 
   <div class="saldo-card">
     <p>Saldo</p>
@@ -32,18 +28,63 @@
     </div>
   </div>
 
+  <!-- LAPORAN -->
   <div class="report">
-    <h3>📊 Laporan</h3>
-    <div id="laporanMasuk"></div>
-    <div id="laporanKeluar"></div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3>📊 Laporan</h3>
+      <button onclick="toggleFilter()" class="filter-btn">⚙️</button>
+    </div>
+
+    <!-- FILTER -->
+    <div id="filterPanel" class="filter-panel">
+      <label>Dari Bulan</label>
+      <input type="month" id="fromMonth">
+
+      <label>Sampai Bulan</label>
+      <input type="month" id="toMonth">
+
+      <label>Kategori</label>
+
+      <div class="filter-actions">
+        <button onclick="selectAllKategori()">Select All</button>
+        <button onclick="clearAllKategori()">Clear</button>
+      </div>
+
+      <div id="filterKategori" class="filter-kategori"></div>
+
+      <button onclick="applyFilter()">Terapkan</button>
+      <button class="btn-close" onclick="resetFilter()">Reset</button>
+    </div>
+
+    <!-- PEMASUKAN -->
+    <div class="report-header" onclick="toggleMasuk()">
+      <span class="text-masuk">⬆️ Pemasukan</span>
+      <span id="iconMasuk">▼</span>
+    </div>
+    <div id="laporanMasuk" class="report-content"></div>
+
+    <!-- PENGELUARAN -->
+    <div class="report-header" onclick="toggleKeluar()">
+      <span class="text-keluar">⬇️ Pengeluaran</span>
+      <span id="iconKeluar">▼</span>
+    </div>
+    <div id="laporanKeluar" class="report-content"></div>
+
   </div>
 
+  <!-- 🔥 LIST (fix: cuma 1) -->
   <div id="list" class="list"></div>
 
   <button class="fab" onclick="openSheet()">＋</button>
 
+  <!-- SHEET -->
   <div class="sheet" id="sheet">
     <div class="sheet-content">
+      <div class="drag-bar" id="dragBar"></div>
+
+      <h3>Tambah Transaksi</h3>
+
       <input type="date" id="tanggal">
       <input type="text" id="nama" placeholder="Keterangan">
       <input type="number" id="nominal" placeholder="Nominal">
@@ -74,32 +115,56 @@
         <option value="keluar">Pengeluaran</option>
       </select>
 
+      <select id="wallet">
+        <option>Cash</option>
+        <option>Bank</option>
+        <option>E-Wallet</option>
+      </select>
+
       <button onclick="tambahData()">Simpan</button>
+      <button class="btn-close" onclick="closeSheet()">Tutup</button>
+    </div>
+  </div>
+
+  <!-- POPUP -->
+  <div class="popup" id="popup">
+    <div class="popup-box">
+      <p>Yakin mau hapus transaksi ini?</p>
+      <button onclick="confirmDelete()">Hapus</button>
+      <button class="btn-close" onclick="closePopup()">Batal</button>
     </div>
   </div>
 
 </div>
 
+<div class="divider"></div>
+
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyCMcad9_ucmqcGjZmY_oZ3p_UgSxS29iaY",
   authDomain: "catatan-keuangan-37194.firebaseapp.com",
   databaseURL: "https://catatan-keuangan-37194-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "catatan-keuangan-37194",
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.database();
-const auth = firebase.auth();
-
-auth.signInAnonymously();
 </script>
 
 <script src="script.js"></script>
+
+<!-- 🔥 WAJIB PWA -->
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js')
+    .then(() => console.log("SW aktif"))
+    .catch(err => console.log(err));
+}
+</script>
 
 </body>
 </html>
