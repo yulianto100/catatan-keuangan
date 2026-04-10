@@ -1,15 +1,17 @@
-const CACHE_NAME = "keuangan-app-v2";
+const CACHE_NAME = "keuangan-app-v3";
 
 self.addEventListener("install", event => {
-  self.skipWaiting(); // 🔥 langsung aktif
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll([
-        "/",
-        "/index.html",
-        "/style.css",
-        "/script.js",
-        "/manifest.json"
+        "./",
+        "./index.html",
+        "./style.css",
+        "./script.js",
+        "./manifest.json",
+        "./icon-192.png",
+        "./icon-512.png"
       ]);
     })
   );
@@ -20,9 +22,7 @@ self.addEventListener("activate", event => {
     caches.keys().then(keys =>
       Promise.all(
         keys.map(k => {
-          if (k !== CACHE_NAME) {
-            return caches.delete(k); // 🔥 hapus cache lama
-          }
+          if (k !== CACHE_NAME) return caches.delete(k);
         })
       )
     )
