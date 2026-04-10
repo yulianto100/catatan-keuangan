@@ -165,7 +165,9 @@ function renderLaporan(listData = data) {
 // FILTER
 function toggleFilter() {
   let panel = document.getElementById("filterPanel");
-  panel.style.display = panel.style.display === "none" ? "block" : "none";
+  panel.style.display = panel.style.display === "none" || panel.style.display === "" 
+    ? "block" 
+    : "none";
 }
 
 function generateKategoriFilter() {
