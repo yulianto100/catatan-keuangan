@@ -134,3 +134,35 @@ button {
   border-radius: 16px;
   width: 80%;
 }
+
+/* FILTER BUTTON */
+.filter-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #334155;
+  font-size: 18px;
+}
+
+/* FILTER PANEL */
+.filter-panel {
+  display: none;
+  margin-top: 10px;
+  background: #1e293b;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+/* KATEGORI LIST */
+.kategori-list label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+/* CHECKBOX KECIL */
+.kategori-list input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
