@@ -1,29 +1,24 @@
-const BIN_ID = "69d7469b36566621a893076b";
-const API_KEY = "$2a$10$muEfJZR3SbcfGp/bnvG70OkpHIiWIScvYv3F18/flHtGPmAjFzilu";
-const SHEET_API = "https://script.google.com/macros/s/AKfycbyuxRrgiCMZJk_Kuj8wQJHOmzPxFmFhxUloWN7XqffdgVX9ZA5xw_HwUuVvo0jEuOXn/exec";
-
 let data = [];
 let deleteIndex = null;
-let selectedKategori = [];
-
-// 🔥 REALTIME
-function loadData() {
-  db.ref("keuangan").on("value", snapshot => {
-    data = snapshot.val() || [];
-    render();
-    generateKategoriFilter();
-  });
-}
-
-function saveData() {
-  db.ref("keuangan").set(data);
-}
 
 window.onload = () => {
   loadData();
   document.getElementById("tanggal").valueAsDate = new Date();
   initSheetDrag();
 };
+
+// 🔥 LOAD REALTIME
+function loadData() {
+  db.ref("keuangan").on("value", snapshot => {
+    data = snapshot.val() || [];
+    render();
+  });
+}
+
+// 🔥 SAVE
+function saveData() {
+  db.ref("keuangan").set(data);
+}
 
 // FORMAT
 function formatRupiah(n) {
@@ -73,13 +68,13 @@ function closePopup() {
 }
 
 // RENDER
-function render(listData = data) {
+function render() {
   let list = document.getElementById("list");
   list.innerHTML = "";
 
   let saldo = 0, masuk = 0, keluar = 0;
 
-  listData.forEach((item, i) => {
+  data.forEach((item, i) => {
     if (item.tipe === "masuk") {
       saldo += item.nominal;
       masuk += item.nominal;
@@ -104,14 +99,14 @@ function render(listData = data) {
   document.getElementById("totalMasuk").innerText = "Rp " + formatRupiah(masuk);
   document.getElementById("totalKeluar").innerText = "Rp " + formatRupiah(keluar);
 
-  renderLaporan(listData);
+  renderLaporan();
 }
 
 // LAPORAN
-function renderLaporan(listData = data) {
+function renderLaporan() {
   let masukMap = {}, keluarMap = {};
 
-  listData.forEach(item => {
+  data.forEach(item => {
     if (item.tipe === "masuk") {
       masukMap[item.kategori] = (masukMap[item.kategori] || 0) + item.nominal;
     } else {
@@ -134,38 +129,6 @@ function renderLaporan(listData = data) {
   }
 }
 
-// FILTER
-function toggleFilter() {
-  let panel = document.getElementById("filterPanel");
-  panel.style.display = panel.style.display === "block" ? "none" : "block";
-}
-
-function generateKategoriFilter() {
-  let container = document.getElementById("filterKategori");
-  let unik = [...new Set(data.map(d => d.kategori))];
-
-  container.innerHTML = "";
-  unik.forEach(k => {
-    container.innerHTML += `<label><input type="checkbox" value="${k}" onchange="updateKategori(this)"> ${k}</label><br>`;
-  });
-}
-
-function updateKategori(el) {
-  if (el.checked) selectedKategori.push(el.value);
-  else selectedKategori = selectedKategori.filter(k => k !== el.value);
-}
-
-function applyFilter() {
-  render(data);
-  document.getElementById("filterPanel").style.display = "none";
-}
-
-function resetFilter() {
-  selectedKategori = [];
-  render();
-  document.getElementById("filterPanel").style.display = "none";
-}
-
 // SHEET
 function openSheet() {
   document.getElementById("sheet").classList.add("active");
@@ -175,6 +138,7 @@ function closeSheet() {
   document.getElementById("sheet").classList.remove("active");
 }
 
+// DRAG
 function initSheetDrag() {
   let sheet = document.getElementById("sheet");
   let dragBar = document.getElementById("dragBar");
