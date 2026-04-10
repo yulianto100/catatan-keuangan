@@ -1,24 +1,25 @@
 let data = [];
 let deleteIndex = null;
+let selectedKategori = [];
+
+// LOAD REALTIME
+function loadData() {
+  db.ref("keuangan").on("value", snapshot => {
+    data = snapshot.val() || [];
+    render();
+    generateKategoriFilter();
+  });
+}
+
+function saveData() {
+  db.ref("keuangan").set(data);
+}
 
 window.onload = () => {
   loadData();
   document.getElementById("tanggal").valueAsDate = new Date();
   initSheetDrag();
 };
-
-// 🔥 LOAD REALTIME
-function loadData() {
-  db.ref("keuangan").on("value", snapshot => {
-    data = snapshot.val() || [];
-    render();
-  });
-}
-
-// 🔥 SAVE
-function saveData() {
-  db.ref("keuangan").set(data);
-}
 
 // FORMAT
 function formatRupiah(n) {
@@ -41,7 +42,6 @@ function tambahData() {
   if (!nama || !nominal) return alert("Isi semua!");
 
   data.unshift({ nama, nominal, kategori, tipe, wallet, tanggal });
-
   saveData();
 
   document.getElementById("nama").value = "";
@@ -68,13 +68,13 @@ function closePopup() {
 }
 
 // RENDER
-function render() {
+function render(listData = data) {
   let list = document.getElementById("list");
   list.innerHTML = "";
 
   let saldo = 0, masuk = 0, keluar = 0;
 
-  data.forEach((item, i) => {
+  listData.forEach((item, i) => {
     if (item.tipe === "masuk") {
       saldo += item.nominal;
       masuk += item.nominal;
@@ -87,10 +87,19 @@ function render() {
 
     list.innerHTML += `
       <div class="item">
-        <b>${item.nama}</b>
-        <small>${item.kategori} • ${formatTanggal(item.tanggal)}</small>
-        <b style="float:right;color:${warna}">Rp ${formatRupiah(item.nominal)}</b>
-        <button onclick="openDelete(${i})">🗑️</button>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          
+          <div>
+            <b>${item.nama}</b><br>
+            <small>${item.kategori} • ${formatTanggal(item.tanggal)}</small>
+          </div>
+
+          <div style="text-align:right">
+            <b style="color:${warna}">Rp ${formatRupiah(item.nominal)}</b><br>
+            <button onclick="openDelete(${i})" style="margin-top:5px">🗑️</button>
+          </div>
+
+        </div>
       </div>
     `;
   });
@@ -99,14 +108,14 @@ function render() {
   document.getElementById("totalMasuk").innerText = "Rp " + formatRupiah(masuk);
   document.getElementById("totalKeluar").innerText = "Rp " + formatRupiah(keluar);
 
-  renderLaporan();
+  renderLaporan(listData);
 }
 
-// LAPORAN
-function renderLaporan() {
+// LAPORAN (dibedain warna)
+function renderLaporan(listData = data) {
   let masukMap = {}, keluarMap = {};
 
-  data.forEach(item => {
+  listData.forEach(item => {
     if (item.tipe === "masuk") {
       masukMap[item.kategori] = (masukMap[item.kategori] || 0) + item.nominal;
     } else {
@@ -115,18 +124,70 @@ function renderLaporan() {
   });
 
   let masukEl = document.getElementById("laporanMasuk");
-  masukEl.innerHTML = "<h4>⬆️ Pemasukan</h4>";
+  masukEl.innerHTML = "<h4 style='color:#22c55e'>⬆️ Pemasukan</h4>";
 
   for (let k in masukMap) {
-    masukEl.innerHTML += `<div>${k} <b>Rp ${formatRupiah(masukMap[k])}</b></div>`;
+    masukEl.innerHTML += `<div style="background:#064e3b;padding:8px;border-radius:8px;margin-bottom:5px">
+      ${k} <b style="float:right">Rp ${formatRupiah(masukMap[k])}</b>
+    </div>`;
   }
 
   let keluarEl = document.getElementById("laporanKeluar");
-  keluarEl.innerHTML = "<h4>⬇️ Pengeluaran</h4>";
+  keluarEl.innerHTML = "<h4 style='color:#ef4444'>⬇️ Pengeluaran</h4>";
 
   for (let k in keluarMap) {
-    keluarEl.innerHTML += `<div>${k} <b>Rp ${formatRupiah(keluarMap[k])}</b></div>`;
+    keluarEl.innerHTML += `<div style="background:#7f1d1d;padding:8px;border-radius:8px;margin-bottom:5px">
+      ${k} <b style="float:right">Rp ${formatRupiah(keluarMap[k])}</b>
+    </div>`;
   }
+}
+
+// FILTER
+function toggleFilter() {
+  let panel = document.getElementById("filterPanel");
+  panel.style.display = panel.style.display === "block" ? "none" : "block";
+}
+
+function generateKategoriFilter() {
+  let container = document.getElementById("filterKategori");
+  let unik = [...new Set(data.map(d => d.kategori))];
+
+  container.innerHTML = "";
+  unik.forEach(k => {
+    container.innerHTML += `
+      <label>
+        <input type="checkbox" value="${k}" onchange="updateKategori(this)">
+        ${k}
+      </label><br>
+    `;
+  });
+}
+
+function updateKategori(el) {
+  if (el.checked) selectedKategori.push(el.value);
+  else selectedKategori = selectedKategori.filter(k => k !== el.value);
+}
+
+function applyFilter() {
+  let from = document.getElementById("fromMonth").value;
+  let to = document.getElementById("toMonth").value;
+
+  let filtered = data.filter(d => {
+    let bulan = new Date(d.tanggal).toISOString().slice(0,7);
+
+    return (!from || bulan >= from) &&
+           (!to || bulan <= to) &&
+           (selectedKategori.length === 0 || selectedKategori.includes(d.kategori));
+  });
+
+  render(filtered);
+  document.getElementById("filterPanel").style.display = "none";
+}
+
+function resetFilter() {
+  selectedKategori = [];
+  render();
+  document.getElementById("filterPanel").style.display = "none";
 }
 
 // SHEET
