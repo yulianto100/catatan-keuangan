@@ -38,7 +38,7 @@
       <input type="month" id="toMonth">
 
       <label>Kategori</label>
-      <div id="filterKategori"></div>
+      <div id="filterKategori" class="filter-kategori"></div>
 
       <button onclick="applyFilter()">Terapkan</button>
       <button class="btn-close" onclick="resetFilter()">Reset</button>
@@ -55,7 +55,6 @@
   <!-- SHEET -->
   <div class="sheet" id="sheet">
     <div class="sheet-content">
-
       <div class="drag-bar" id="dragBar"></div>
 
       <h3>Tambah Transaksi</h3>
@@ -65,23 +64,10 @@
       <input type="number" id="nominal" placeholder="Nominal">
 
       <select id="kategori">
-        <option>Bills</option>
-        <option>Clothes</option>
-        <option>Communication</option>
-        <option>Eating Out</option>
-        <option>Entertainment</option>
         <option>Food</option>
-        <option>Gifts</option>
-        <option>Health</option>
-        <option>House</option>
-        <option>Jajan Mas</option>
-        <option>Motorcycle</option>
-        <option>Sports</option>
-        <option>Toiletry</option>
         <option>Transport</option>
-        <option>Deposits</option>
         <option>Salary</option>
-        <option>Saving</option>
+        <option>Entertainment</option>
       </select>
 
       <select id="tipe">
@@ -97,7 +83,6 @@
 
       <button onclick="tambahData()">Simpan</button>
       <button class="btn-close" onclick="closeSheet()">Tutup</button>
-
     </div>
   </div>
 
