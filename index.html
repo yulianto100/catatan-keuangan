@@ -23,8 +23,27 @@
     </div>
   </div>
 
+  <!-- 🔥 LAPORAN + FILTER -->
   <div class="report">
-    <h3>📊 Laporan</h3>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3>📊 Laporan</h3>
+      <button onclick="toggleFilter()" class="filter-btn">⚙️</button>
+    </div>
+
+    <div id="filterPanel" class="filter-panel">
+      <label>Dari Bulan</label>
+      <input type="month" id="fromMonth">
+
+      <label>Sampai Bulan</label>
+      <input type="month" id="toMonth">
+
+      <label>Kategori</label>
+      <div id="filterKategori"></div>
+
+      <button onclick="applyFilter()">Terapkan</button>
+      <button class="btn-close" onclick="resetFilter()">Reset</button>
+    </div>
+
     <div id="laporanMasuk"></div>
     <div id="laporanKeluar"></div>
   </div>
@@ -93,7 +112,7 @@
 
 </div>
 
-<!-- 🔥 FIREBASE -->
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
