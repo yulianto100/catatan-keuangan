@@ -166,3 +166,56 @@ button {
   width: 16px;
   height: 16px;
 }
+
+/* 🔥 FILTER PANEL */
+.filter-panel {
+  background: #1e293b;
+  padding: 12px;
+  border-radius: 12px;
+  margin-top: 10px;
+  display: none;
+
+  /* animasi */
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.25s ease;
+}
+
+.filter-panel.show {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 🔥 CHECKBOX STYLE */
+.filter-kategori {
+  max-height: 150px;
+  overflow-y: auto;
+  margin-top: 8px;
+  padding-right: 5px;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+/* kecil + clean */
+.filter-item input {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+/* 🔥 BUTTON FILTER ICON */
+.filter-btn {
+  background: #334155;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
