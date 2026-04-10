@@ -144,6 +144,44 @@ button {
   font-size: 18px;
 }
 
+/* LIST KATEGORI */
+.filter-kategori {
+  max-height: 150px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+
+/* ITEM KATEGORI */
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+/* CHECKBOX KECIL */
+.filter-item input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  cursor: pointer;
+}
+
+/* ACTION BUTTON */
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.filter-actions button {
+  flex: 1;
+  padding: 6px;
+  font-size: 12px;
+  background: #334155;
+}
+
 /* FILTER PANEL */
 .filter-panel {
   display: none;
@@ -167,55 +205,107 @@ button {
   height: 16px;
 }
 
-/* 🔥 FILTER PANEL */
 .filter-panel {
+  display: none;
+  margin-top: 10px;
   background: #1e293b;
   padding: 12px;
   border-radius: 12px;
-  margin-top: 10px;
-  display: none;
-
-  /* animasi */
-  opacity: 0;
-  transform: translateY(-10px);
-  transition: all 0.25s ease;
 }
 
-.filter-panel.show {
-  display: block;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* 🔥 CHECKBOX STYLE */
-.filter-kategori {
-  max-height: 150px;
-  overflow-y: auto;
-  margin-top: 8px;
-  padding-right: 5px;
-}
-
-.filter-item {
+.kategori-list label {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-  font-size: 14px;
+  gap: 6px;
+  margin-bottom: 5px;
 }
 
-/* kecil + clean */
-.filter-item input {
+.kategori-list input {
   width: 14px;
   height: 14px;
+}
+
+
+/* 🔥 LAPORAN MASUK */
+.laporan-masuk {
+  background: #1e3a8a; /* biru */
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* 🔥 LAPORAN KELUAR */
+.laporan-keluar {
+  background: #7f1d1d; /* merah */
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* 🔥 TEXT COLOR */
+.text-masuk {
+  color: #22c55e; /* hijau */
+}
+
+.text-keluar {
+  color: #ef4444; /* merah */
+}
+
+/* HEADER CLICK */
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: #1e293b;
+  border-radius: 10px;
+  margin-top: 10px;
   cursor: pointer;
 }
 
-/* 🔥 BUTTON FILTER ICON */
-.filter-btn {
-  background: #334155;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
+/* CONTENT (HIDDEN DEFAULT) */
+.report-content {
+  display: none;
+  margin-top: 6px;
+}
+
+/* 🔥 PEMBATAS ANTARA LAPORAN & LIST */
+.list {
+  margin-top: 20px;
+}
+
+/* 🔥 ITEM TRANSAKSI (BIAR KEANGKAT) */
+.item {
+  background: #1e293b;
+  padding: 14px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* 🔥 SECTION LAPORAN */
+.report {
+  background: #0f172a;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+/* 🔥 HEADER LAPORAN */
+.report-header {
+  background: #1e293b;
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+/* 🔥 GARIS PEMISAH HALUS */
+.divider {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 16px 0;
 }
