@@ -14,25 +14,7 @@
 <body>
 
 <div class="app">
-  <h2>💰 Keuangan 
-    <button onclick="toggleFilter()" style="float:right">⚙️</button>
-  </h2>
-
-  <!-- FILTER -->
-  <div id="filterPanel" style="display:none;margin-bottom:10px;">
-    
-    <label>Dari Bulan</label>
-    <input type="month" id="fromMonth">
-
-    <label>Sampai Bulan</label>
-    <input type="month" id="toMonth">
-
-    <label>Kategori</label>
-    <div id="filterKategori"></div>
-
-    <button onclick="applyFilter()">Terapkan</button>
-    <button class="btn-close" onclick="resetFilter()">Reset</button>
-  </div>
+  <h2>💰 Keuangan</h2>
 
   <div class="saldo-card">
     <p>Saldo</p>
@@ -45,7 +27,31 @@
   </div>
 
   <div class="report">
-    <h3>📊 Laporan</h3>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3>📊 Laporan</h3>
+      
+      <!-- 🔥 ICON FILTER -->
+      <button onclick="toggleFilter()" class="filter-btn">
+        🔽
+      </button>
+    </div>
+
+    <!-- FILTER PANEL -->
+    <div id="filterPanel" class="filter-panel">
+      
+      <label>Dari Bulan</label>
+      <input type="month" id="fromMonth">
+
+      <label>Sampai Bulan</label>
+      <input type="month" id="toMonth">
+
+      <label>Kategori</label>
+      <div id="filterKategori" class="kategori-list"></div>
+
+      <button onclick="applyFilter()">Terapkan</button>
+      <button class="btn-close" onclick="resetFilter()">Reset</button>
+    </div>
+
     <div id="laporanMasuk"></div>
     <div id="laporanKeluar"></div>
   </div>
