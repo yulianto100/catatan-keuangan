@@ -5,7 +5,6 @@ const SHEET_API = "https://script.google.com/macros/s/AKfycbyuxRrgiCMZJk_Kuj8wQJ
 
 let data = [];
 let deleteIndex = null;
-
 let selectedKategori = [];
 
 window.onload = () => {
@@ -64,7 +63,13 @@ function tambahData() {
   render();
   generateKategoriFilter();
   saveCloud();
-  closeSheet();
+
+  // 🔥 RESET FORM
+  document.getElementById("nama").value = "";
+  document.getElementById("nominal").value = "";
+  document.getElementById("tanggal").valueAsDate = new Date();
+
+  closeSheet(); // balik ke halaman utama
 }
 
 // DELETE
@@ -85,7 +90,7 @@ function closePopup() {
   document.getElementById("popup").style.display = "none";
 }
 
-// RENDER
+// RENDER LIST
 function render(listData = data) {
   let list = document.getElementById("list");
   list.innerHTML = "";
@@ -106,6 +111,7 @@ function render(listData = data) {
     list.innerHTML += `
       <div class="item">
         <div style="display:flex;justify-content:space-between;align-items:center">
+          
           <div>
             <b>${item.nama}</b><br>
             <small>${item.kategori} • ${formatTanggal(item.tanggal)}</small>
@@ -117,6 +123,7 @@ function render(listData = data) {
               🗑️
             </button>
           </div>
+
         </div>
       </div>
     `;
@@ -129,7 +136,7 @@ function render(listData = data) {
   renderLaporan(listData);
 }
 
-// LAPORAN
+// 🔥 LAPORAN (BEDA STYLE)
 function renderLaporan(listData = data) {
   let masukMap = {}, keluarMap = {};
 
@@ -145,29 +152,31 @@ function renderLaporan(listData = data) {
   masukEl.innerHTML = "<h4>⬆️ Pemasukan</h4>";
 
   for (let k in masukMap) {
-    masukEl.innerHTML += `<div class="report-item">
-      <span>${k}</span>
-      <b style="color:#22c55e">Rp ${formatRupiah(masukMap[k])}</b>
-    </div>`;
+    masukEl.innerHTML += `
+      <div style="background:#064e3b;padding:10px;border-radius:10px;margin-bottom:6px">
+        <span>${k}</span>
+        <b style="float:right;color:#4ade80">Rp ${formatRupiah(masukMap[k])}</b>
+      </div>
+    `;
   }
 
   let keluarEl = document.getElementById("laporanKeluar");
   keluarEl.innerHTML = "<h4>⬇️ Pengeluaran</h4>";
 
   for (let k in keluarMap) {
-    keluarEl.innerHTML += `<div class="report-item">
-      <span>${k}</span>
-      <b style="color:#ef4444">Rp ${formatRupiah(keluarMap[k])}</b>
-    </div>`;
+    keluarEl.innerHTML += `
+      <div style="background:#7f1d1d;padding:10px;border-radius:10px;margin-bottom:6px">
+        <span>${k}</span>
+        <b style="float:right;color:#f87171">Rp ${formatRupiah(keluarMap[k])}</b>
+      </div>
+    `;
   }
 }
 
 // FILTER
 function toggleFilter() {
   let panel = document.getElementById("filterPanel");
-  panel.style.display = panel.style.display === "none" || panel.style.display === "" 
-    ? "block" 
-    : "none";
+  panel.style.display = panel.style.display === "block" ? "none" : "block";
 }
 
 function generateKategoriFilter() {
@@ -213,9 +222,11 @@ function applyFilter() {
   });
 
   render(filtered);
+
+  // 🔥 AUTO CLOSE FILTER
+  document.getElementById("filterPanel").style.display = "none";
 }
 
-// 🔥 RESET FILTER
 function resetFilter() {
   document.getElementById("fromMonth").value = "";
   document.getElementById("toMonth").value = "";
@@ -223,6 +234,9 @@ function resetFilter() {
 
   generateKategoriFilter();
   render();
+
+  // 🔥 AUTO CLOSE
+  document.getElementById("filterPanel").style.display = "none";
 }
 
 // SHEET
