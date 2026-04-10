@@ -1,0 +1,136 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI';
+  background: #0f172a;
+  color: white;
+}
+
+.app {
+  padding: 12px;
+}
+
+/* CARD */
+.saldo-card {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* INPUT */
+input, select {
+  width: 100%;
+  height: 48px;
+  margin: 6px 0;
+  border-radius: 12px;
+  border: none;
+  padding: 12px;
+}
+
+input[type="date"],
+input[type="month"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e5e7eb;
+  color: black;
+}
+
+/* LIST */
+.item {
+  background: #1e293b;
+  padding: 14px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+}
+
+/* BUTTON */
+button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: #22c55e;
+  color: white;
+  margin-top: 6px;
+}
+
+.btn-close {
+  background: #334155;
+}
+
+/* FAB */
+.fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 24px;
+}
+
+/* SHEET */
+.sheet {
+  position: fixed;
+  bottom: -100%;
+  left: 0;
+  right: 0;
+  height: 75%;
+  background: #1e293b;
+  border-radius: 20px 20px 0 0;
+  transition: 0.3s ease;
+}
+
+.sheet.active {
+  bottom: 0;
+}
+
+.sheet-content {
+  padding: 16px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.drag-bar {
+  width: 40px;
+  height: 5px;
+  background: #aaa;
+  border-radius: 5px;
+  margin: auto;
+  margin-bottom: 10px;
+}
+
+/* REPORT */
+.report-item {
+  background: #1e293b;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* 🔥 POPUP */
+.popup {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+}
+
+.popup-box {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 16px;
+  width: 80%;
+}

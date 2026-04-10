@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Keuangan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+  <h2>💰 Keuangan</h2>
+
+  <div class="saldo-card">
+    <p>Saldo</p>
+    <h1 id="saldo">Rp 0</h1>
+
+    <div class="row">
+      <span>⬆️ <b id="totalMasuk">Rp 0</b></span>
+      <span>⬇️ <b id="totalKeluar">Rp 0</b></span>
+    </div>
+  </div>
+
+  <div class="report">
+    <h3>📊 Laporan</h3>
+    <div id="laporanMasuk"></div>
+    <div id="laporanKeluar"></div>
+  </div>
+
+  <input type="month" id="filterBulan" onchange="filterBulan()">
+
+  <div id="list" class="list"></div>
+
+  <button class="fab" onclick="openSheet()">＋</button>
+
+  <!-- 🔥 BOTTOM SHEET -->
+  <div class="sheet" id="sheet">
+    <div class="sheet-content">
+
+      <div class="drag-bar" id="dragBar"></div>
+
+      <h3>Tambah Transaksi</h3>
+
+      <input type="date" id="tanggal">
+      <input type="text" id="nama" placeholder="Keterangan">
+      <input type="number" id="nominal" placeholder="Nominal">
+
+      <select id="kategori">
+        <option>Bills</option>
+        <option>Clothes</option>
+        <option>Communication</option>
+        <option>Eating Out</option>
+        <option>Entertainment</option>
+        <option>Food</option>
+        <option>Gifts</option>
+        <option>Health</option>
+        <option>House</option>
+        <option>Jajan Mas</option>
+        <option>Motorcycle</option>
+        <option>Sports</option>
+        <option>Toiletry</option>
+        <option>Transport</option>
+        <option>Deposits</option>
+        <option>Salary</option>
+        <option>Saving</option>
+      </select>
+
+      <select id="tipe">
+        <option value="masuk">Pemasukan</option>
+        <option value="keluar">Pengeluaran</option>
+      </select>
+
+      <select id="wallet">
+        <option>Cash</option>
+        <option>Bank</option>
+        <option>E-Wallet</option>
+      </select>
+
+      <button onclick="tambahData()">Simpan</button>
+      <button class="btn-close" onclick="closeSheet()">Tutup</button>
+
+    </div>
+  </div>
+
+  <!-- 🔥 POPUP DELETE -->
+  <div class="popup" id="popup">
+    <div class="popup-box">
+      <p>Yakin mau hapus transaksi ini?</p>
+      <button onclick="confirmDelete()">Hapus</button>
+      <button class="btn-close" onclick="closePopup()">Batal</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
