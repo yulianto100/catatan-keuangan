@@ -6,13 +6,11 @@ const SHEET_API = "https://script.google.com/macros/s/AKfycbyuxRrgiCMZJk_Kuj8wQJ
 let data = [];
 let deleteIndex = null;
 
+let selectedKategori = [];
+
 window.onload = () => {
   loadCloud();
-
   document.getElementById("tanggal").valueAsDate = new Date();
-  document.getElementById("filterBulan").value =
-    new Date().toISOString().slice(0,7);
-
   initSheetDrag();
 };
 
@@ -27,32 +25,26 @@ function formatTanggal(t) {
 
 // LOAD
 async function loadCloud() {
-  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-    headers: { "X-Master-Key": API_KEY }
+  let res = await fetch(`https://api.jsonbin.io/v3/b/69d7469b36566621a893076b/latest`, {
+    headers: { "X-Master-Key": "$2a$10$muEfJZR3SbcfGp/bnvG70OkpHIiWIScvYv3F18/flHtGPmAjFzilu" }
   });
 
   let json = await res.json();
   data = json.record?.data || [];
 
   render();
+  generateKategoriFilter();
 }
 
 // SAVE
 async function saveCloud() {
-  await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+  await fetch(`https://api.jsonbin.io/v3/b/69d7469b36566621a893076b`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      "X-Master-Key": API_KEY
+      "X-Master-Key": "$2a$10$muEfJZR3SbcfGp/bnvG70OkpHIiWIScvYv3F18/flHtGPmAjFzilu"
     },
     body: JSON.stringify({ data })
-  });
-}
-
-async function syncToSheet() {
-  await fetch(SHEET_API, {
-    method: "POST",
-    body: JSON.stringify(data)
   });
 }
 
@@ -70,34 +62,27 @@ function tambahData() {
   data.unshift({ nama, nominal, kategori, tipe, wallet, tanggal });
 
   render();
+  generateKategoriFilter();
   saveCloud();
-  syncToSheet();
-
   closeSheet();
 }
 
-// 🔥 DELETE FLOW
+// DELETE
 function openDelete(index) {
   deleteIndex = index;
   document.getElementById("popup").style.display = "flex";
 }
 
-function closePopup() {
-  document.getElementById("popup").style.display = "none";
+function confirmDelete() {
+  data.splice(deleteIndex, 1);
+  render();
+  generateKategoriFilter();
+  saveCloud();
+  closePopup();
 }
 
-function confirmDelete() {
-  if (deleteIndex !== null) {
-    data.splice(deleteIndex, 1);
-
-    render();
-    saveCloud();
-    syncToSheet();
-
-    deleteIndex = null;
-  }
-
-  closePopup();
+function closePopup() {
+  document.getElementById("popup").style.display = "none";
 }
 
 // RENDER
@@ -118,19 +103,23 @@ function render(listData = data) {
 
     let warna = item.tipe === "masuk" ? "#22c55e" : "#ef4444";
 
-    let div = document.createElement("div");
-    div.className = "item";
+    list.innerHTML += `
+      <div class="item">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <b>${item.nama}</b><br>
+            <small>${item.kategori} • ${formatTanggal(item.tanggal)}</small>
+          </div>
 
-    div.innerHTML = `
-      <div style="display:flex;justify-content:space-between">
-        <b>${item.nama}</b>
-        <b style="color:${warna}">Rp ${formatRupiah(item.nominal)}</b>
+          <div style="text-align:right">
+            <b style="color:${warna}">Rp ${formatRupiah(item.nominal)}</b><br>
+            <button onclick="openDelete(${i})" style="background:#ef4444;margin-top:5px;width:auto;padding:6px 10px;">
+              🗑️
+            </button>
+          </div>
+        </div>
       </div>
-      <small>${item.kategori} • ${formatTanggal(item.tanggal)}</small>
-      <button onclick="openDelete(${i})">Hapus</button>
     `;
-
-    list.appendChild(div);
   });
 
   document.getElementById("saldo").innerText = "Rp " + formatRupiah(saldo);
@@ -174,14 +163,64 @@ function renderLaporan(listData = data) {
 }
 
 // FILTER
-function filterBulan() {
-  let bulan = document.getElementById("filterBulan").value;
+function toggleFilter() {
+  let panel = document.getElementById("filterPanel");
+  panel.style.display = panel.style.display === "none" ? "block" : "none";
+}
 
-  let filtered = data.filter(d =>
-    new Date(d.tanggal).toISOString().slice(0,7) === bulan
-  );
+function generateKategoriFilter() {
+  let container = document.getElementById("filterKategori");
+  let unik = [...new Set(data.map(d => d.kategori))];
+
+  container.innerHTML = "";
+
+  unik.forEach(k => {
+    container.innerHTML += `
+      <label>
+        <input type="checkbox" value="${k}" onchange="updateKategori(this)">
+        ${k}
+      </label><br>
+    `;
+  });
+}
+
+function updateKategori(el) {
+  if (el.checked) {
+    selectedKategori.push(el.value);
+  } else {
+    selectedKategori = selectedKategori.filter(k => k !== el.value);
+  }
+}
+
+function applyFilter() {
+  let from = document.getElementById("fromMonth").value;
+  let to = document.getElementById("toMonth").value;
+
+  let filtered = data.filter(d => {
+    let bulan = new Date(d.tanggal).toISOString().slice(0,7);
+
+    let okBulan =
+      (!from || bulan >= from) &&
+      (!to || bulan <= to);
+
+    let okKategori =
+      selectedKategori.length === 0 ||
+      selectedKategori.includes(d.kategori);
+
+    return okBulan && okKategori;
+  });
 
   render(filtered);
+}
+
+// 🔥 RESET FILTER
+function resetFilter() {
+  document.getElementById("fromMonth").value = "";
+  document.getElementById("toMonth").value = "";
+  selectedKategori = [];
+
+  generateKategoriFilter();
+  render();
 }
 
 // SHEET
