@@ -101,7 +101,7 @@ function render(listData = data) {
 }
 
 // LAPORAN
-function renderLaporan(listData) {
+function renderLaporan(listData = data) {
   let masukMap = {}, keluarMap = {};
 
   listData.forEach(item => {
@@ -113,31 +113,45 @@ function renderLaporan(listData) {
   });
 
   let masukEl = document.getElementById("laporanMasuk");
-  masukEl.innerHTML = "<h4 style='color:#22c55e'>⬆️ Pemasukan</h4>";
+  masukEl.innerHTML = "";
 
   for (let k in masukMap) {
-    masukEl.innerHTML += `<div>${k} Rp ${masukMap[k].toLocaleString("id-ID")}</div>`;
+    masukEl.innerHTML += `
+      <div class="report-item text-masuk">
+        <span>${k}</span>
+        <b>Rp ${masukMap[k].toLocaleString("id-ID")}</b>
+      </div>
+    `;
   }
 
   let keluarEl = document.getElementById("laporanKeluar");
-  keluarEl.innerHTML = "<h4 style='color:#ef4444'>⬇️ Pengeluaran</h4>";
+  keluarEl.innerHTML = "";
 
   for (let k in keluarMap) {
-    keluarEl.innerHTML += `<div>${k} Rp ${keluarMap[k].toLocaleString("id-ID")}</div>`;
+    keluarEl.innerHTML += `
+      <div class="report-item text-keluar">
+        <span>${k}</span>
+        <b>Rp ${keluarMap[k].toLocaleString("id-ID")}</b>
+      </div>
+    `;
   }
+}
+
+// TOGGLE
+function toggleMasuk() {
+  let el = document.getElementById("laporanMasuk");
+  el.style.display = el.style.display === "block" ? "none" : "block";
+}
+
+function toggleKeluar() {
+  let el = document.getElementById("laporanKeluar");
+  el.style.display = el.style.display === "block" ? "none" : "block";
 }
 
 // FILTER
 function toggleFilter() {
   let panel = document.getElementById("filterPanel");
-
-  if (panel.classList.contains("show")) {
-    panel.classList.remove("show");
-    setTimeout(() => panel.style.display = "none", 200);
-  } else {
-    panel.style.display = "block";
-    setTimeout(() => panel.classList.add("show"), 10);
-  }
+  panel.style.display = panel.style.display === "block" ? "none" : "block";
 }
 
 function generateKategoriFilter() {
@@ -145,6 +159,7 @@ function generateKategoriFilter() {
   let unik = [...new Set(data.map(d => d.kategori))];
 
   container.innerHTML = "";
+
   unik.forEach(k => {
     container.innerHTML += `
       <div class="filter-item">
@@ -156,8 +171,28 @@ function generateKategoriFilter() {
 }
 
 function updateKategori(el) {
-  if (el.checked) selectedKategori.push(el.value);
-  else selectedKategori = selectedKategori.filter(k => k !== el.value);
+  if (el.checked) {
+    if (!selectedKategori.includes(el.value)) {
+      selectedKategori.push(el.value);
+    }
+  } else {
+    selectedKategori = selectedKategori.filter(k => k !== el.value);
+  }
+}
+
+function selectAllKategori() {
+  selectedKategori = [];
+  document.querySelectorAll("#filterKategori input").forEach(cb => {
+    cb.checked = true;
+    selectedKategori.push(cb.value);
+  });
+}
+
+function clearAllKategori() {
+  selectedKategori = [];
+  document.querySelectorAll("#filterKategori input").forEach(cb => {
+    cb.checked = false;
+  });
 }
 
 function applyFilter() {
