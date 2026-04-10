@@ -2,7 +2,7 @@ let data = [];
 let deleteIndex = null;
 let selectedKategori = [];
 
-// LOAD REALTIME
+// LOAD
 function loadData() {
   db.ref("keuangan").on("value", snapshot => {
     data = snapshot.val() || [];
@@ -20,15 +20,6 @@ window.onload = () => {
   document.getElementById("tanggal").valueAsDate = new Date();
   initSheetDrag();
 };
-
-// FORMAT
-function formatRupiah(n) {
-  return n.toLocaleString("id-ID");
-}
-
-function formatTanggal(t) {
-  return new Date(t).toISOString().split("T")[0];
-}
 
 // TAMBAH
 function tambahData() {
@@ -87,32 +78,30 @@ function render(listData = data) {
 
     list.innerHTML += `
       <div class="item">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          
+        <div style="display:flex;justify-content:space-between">
           <div>
             <b>${item.nama}</b><br>
-            <small>${item.kategori} • ${formatTanggal(item.tanggal)}</small>
+            <small>${item.kategori} • ${item.tanggal}</small>
           </div>
 
           <div style="text-align:right">
-            <b style="color:${warna}">Rp ${formatRupiah(item.nominal)}</b><br>
-            <button onclick="openDelete(${i})" style="margin-top:5px">🗑️</button>
+            <b style="color:${warna}">Rp ${item.nominal.toLocaleString("id-ID")}</b><br>
+            <button onclick="openDelete(${i})">🗑️</button>
           </div>
-
         </div>
       </div>
     `;
   });
 
-  document.getElementById("saldo").innerText = "Rp " + formatRupiah(saldo);
-  document.getElementById("totalMasuk").innerText = "Rp " + formatRupiah(masuk);
-  document.getElementById("totalKeluar").innerText = "Rp " + formatRupiah(keluar);
+  document.getElementById("saldo").innerText = "Rp " + saldo.toLocaleString("id-ID");
+  document.getElementById("totalMasuk").innerText = "Rp " + masuk.toLocaleString("id-ID");
+  document.getElementById("totalKeluar").innerText = "Rp " + keluar.toLocaleString("id-ID");
 
   renderLaporan(listData);
 }
 
-// LAPORAN (dibedain warna)
-function renderLaporan(listData = data) {
+// LAPORAN
+function renderLaporan(listData) {
   let masukMap = {}, keluarMap = {};
 
   listData.forEach(item => {
@@ -127,25 +116,28 @@ function renderLaporan(listData = data) {
   masukEl.innerHTML = "<h4 style='color:#22c55e'>⬆️ Pemasukan</h4>";
 
   for (let k in masukMap) {
-    masukEl.innerHTML += `<div style="background:#064e3b;padding:8px;border-radius:8px;margin-bottom:5px">
-      ${k} <b style="float:right">Rp ${formatRupiah(masukMap[k])}</b>
-    </div>`;
+    masukEl.innerHTML += `<div>${k} Rp ${masukMap[k].toLocaleString("id-ID")}</div>`;
   }
 
   let keluarEl = document.getElementById("laporanKeluar");
   keluarEl.innerHTML = "<h4 style='color:#ef4444'>⬇️ Pengeluaran</h4>";
 
   for (let k in keluarMap) {
-    keluarEl.innerHTML += `<div style="background:#7f1d1d;padding:8px;border-radius:8px;margin-bottom:5px">
-      ${k} <b style="float:right">Rp ${formatRupiah(keluarMap[k])}</b>
-    </div>`;
+    keluarEl.innerHTML += `<div>${k} Rp ${keluarMap[k].toLocaleString("id-ID")}</div>`;
   }
 }
 
 // FILTER
 function toggleFilter() {
   let panel = document.getElementById("filterPanel");
-  panel.style.display = panel.style.display === "block" ? "none" : "block";
+
+  if (panel.classList.contains("show")) {
+    panel.classList.remove("show");
+    setTimeout(() => panel.style.display = "none", 200);
+  } else {
+    panel.style.display = "block";
+    setTimeout(() => panel.classList.add("show"), 10);
+  }
 }
 
 function generateKategoriFilter() {
@@ -155,10 +147,10 @@ function generateKategoriFilter() {
   container.innerHTML = "";
   unik.forEach(k => {
     container.innerHTML += `
-      <label>
+      <div class="filter-item">
         <input type="checkbox" value="${k}" onchange="updateKategori(this)">
-        ${k}
-      </label><br>
+        <span>${k}</span>
+      </div>
     `;
   });
 }
@@ -181,13 +173,13 @@ function applyFilter() {
   });
 
   render(filtered);
-  document.getElementById("filterPanel").style.display = "none";
+  toggleFilter();
 }
 
 function resetFilter() {
   selectedKategori = [];
   render();
-  document.getElementById("filterPanel").style.display = "none";
+  toggleFilter();
 }
 
 // SHEET
