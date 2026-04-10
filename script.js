@@ -1,250 +1,116 @@
 let data = [];
-let deleteIndex = null;
-let selectedKategori = [];
+let currentGroup = null;
 
-// LOAD
+// INIT
+auth.onAuthStateChanged(user => {
+  if (!user) return;
+  loadGroups(user);
+});
+
+// 🔥 LOAD GROUP (FIX TOTAL)
+async function loadGroups(user) {
+  let snap = await db.ref("userGroups/" + user.uid).once("value");
+  let groups = snap.val() || {};
+
+  let select = document.getElementById("groupSelect");
+  select.innerHTML = "";
+
+  let ids = Object.keys(groups);
+
+  if (ids.length === 0) {
+    select.innerHTML = `<option disabled selected>Belum ada database</option>`;
+    return;
+  }
+
+  for (let gid of ids) {
+    let nameSnap = await db.ref("groups/" + gid + "/name").once("value");
+
+    let opt = document.createElement("option");
+    opt.value = gid;
+    opt.textContent = nameSnap.val() || gid;
+    select.appendChild(opt);
+  }
+
+  currentGroup = ids[0];
+  select.value = currentGroup;
+
+  select.onchange = () => {
+    currentGroup = select.value;
+    loadData();
+  };
+
+  loadData();
+}
+
+// 🔥 CREATE GROUP (FIX)
+async function createGroup() {
+  let name = prompt("Nama database?");
+  if (!name) return;
+
+  let gid = "group_" + Date.now();
+  let user = auth.currentUser;
+
+  await db.ref("groups/" + gid).set({
+    name: name,
+    data: []
+  });
+
+  await db.ref("userGroups/" + user.uid + "/" + gid).set(true);
+
+  currentGroup = gid;
+
+  loadGroups(user);
+}
+
+// 🔥 LOAD DATA
 function loadData() {
-  db.ref("keuangan").on("value", snapshot => {
-    data = snapshot.val() || [];
+  if (!currentGroup) return;
+
+  db.ref("groups/" + currentGroup + "/data").on("value", snap => {
+    data = snap.val() || [];
     render();
-    generateKategoriFilter();
   });
 }
 
+// 🔥 SAVE
 function saveData() {
-  db.ref("keuangan").set(data);
+  if (!currentGroup) return;
+  db.ref("groups/" + currentGroup + "/data").set(data);
 }
 
-window.onload = () => {
-  loadData();
-  document.getElementById("tanggal").valueAsDate = new Date();
-  initSheetDrag();
-};
-
-// TAMBAH
+// TAMBAH DATA
 function tambahData() {
   let nama = document.getElementById("nama").value;
   let nominal = parseInt(document.getElementById("nominal").value);
-  let kategori = document.getElementById("kategori").value;
   let tipe = document.getElementById("tipe").value;
-  let wallet = document.getElementById("wallet").value;
-  let tanggal = document.getElementById("tanggal").value;
 
-  if (!nama || !nominal) return alert("Isi semua!");
+  if (!nama || !nominal) return alert("Isi dulu");
 
-  data.unshift({ nama, nominal, kategori, tipe, wallet, tanggal });
+  data.unshift({ nama, nominal, tipe });
   saveData();
-
-  document.getElementById("nama").value = "";
-  document.getElementById("nominal").value = "";
-  document.getElementById("tanggal").valueAsDate = new Date();
-
-  closeSheet();
-}
-
-// DELETE
-function openDelete(index) {
-  deleteIndex = index;
-  document.getElementById("popup").style.display = "flex";
-}
-
-function confirmDelete() {
-  data.splice(deleteIndex, 1);
-  saveData();
-  closePopup();
-}
-
-function closePopup() {
-  document.getElementById("popup").style.display = "none";
 }
 
 // RENDER
-function render(listData = data) {
+function render() {
   let list = document.getElementById("list");
   list.innerHTML = "";
 
-  let saldo = 0, masuk = 0, keluar = 0;
+  let saldo = 0;
 
-  listData.forEach((item, i) => {
-    if (item.tipe === "masuk") {
-      saldo += item.nominal;
-      masuk += item.nominal;
-    } else {
-      saldo -= item.nominal;
-      keluar += item.nominal;
-    }
-
-    let warna = item.tipe === "masuk" ? "#22c55e" : "#ef4444";
+  data.forEach(d => {
+    saldo += d.tipe === "masuk" ? d.nominal : -d.nominal;
 
     list.innerHTML += `
       <div class="item">
-        <div style="display:flex;justify-content:space-between">
-          <div>
-            <b>${item.nama}</b><br>
-            <small>${item.kategori} • ${item.tanggal}</small>
-          </div>
-
-          <div style="text-align:right">
-            <b style="color:${warna}">Rp ${item.nominal.toLocaleString("id-ID")}</b><br>
-            <button onclick="openDelete(${i})">🗑️</button>
-          </div>
-        </div>
+        ${d.nama} - Rp ${d.nominal}
       </div>
     `;
   });
 
-  document.getElementById("saldo").innerText = "Rp " + saldo.toLocaleString("id-ID");
-  document.getElementById("totalMasuk").innerText = "Rp " + masuk.toLocaleString("id-ID");
-  document.getElementById("totalKeluar").innerText = "Rp " + keluar.toLocaleString("id-ID");
-
-  renderLaporan(listData);
+  document.getElementById("saldo").innerText = "Rp " + saldo;
 }
 
-// LAPORAN
-function renderLaporan(listData = data) {
-  let masukMap = {}, keluarMap = {};
-
-  listData.forEach(item => {
-    if (item.tipe === "masuk") {
-      masukMap[item.kategori] = (masukMap[item.kategori] || 0) + item.nominal;
-    } else {
-      keluarMap[item.kategori] = (keluarMap[item.kategori] || 0) + item.nominal;
-    }
-  });
-
-  let masukEl = document.getElementById("laporanMasuk");
-  masukEl.innerHTML = "";
-
-  for (let k in masukMap) {
-    masukEl.innerHTML += `
-      <div class="report-item text-masuk">
-        <span>${k}</span>
-        <b>Rp ${masukMap[k].toLocaleString("id-ID")}</b>
-      </div>
-    `;
-  }
-
-  let keluarEl = document.getElementById("laporanKeluar");
-  keluarEl.innerHTML = "";
-
-  for (let k in keluarMap) {
-    keluarEl.innerHTML += `
-      <div class="report-item text-keluar">
-        <span>${k}</span>
-        <b>Rp ${keluarMap[k].toLocaleString("id-ID")}</b>
-      </div>
-    `;
-  }
-}
-
-// TOGGLE
-function toggleMasuk() {
-  let el = document.getElementById("laporanMasuk");
-  el.style.display = el.style.display === "block" ? "none" : "block";
-}
-
-function toggleKeluar() {
-  let el = document.getElementById("laporanKeluar");
-  el.style.display = el.style.display === "block" ? "none" : "block";
-}
-
-// FILTER
-function toggleFilter() {
-  let panel = document.getElementById("filterPanel");
-  panel.style.display = panel.style.display === "block" ? "none" : "block";
-}
-
-function generateKategoriFilter() {
-  let container = document.getElementById("filterKategori");
-  let unik = [...new Set(data.map(d => d.kategori))];
-
-  container.innerHTML = "";
-
-  unik.forEach(k => {
-    container.innerHTML += `
-      <div class="filter-item">
-        <input type="checkbox" value="${k}" onchange="updateKategori(this)">
-        <span>${k}</span>
-      </div>
-    `;
-  });
-}
-
-function updateKategori(el) {
-  if (el.checked) {
-    if (!selectedKategori.includes(el.value)) {
-      selectedKategori.push(el.value);
-    }
-  } else {
-    selectedKategori = selectedKategori.filter(k => k !== el.value);
-  }
-}
-
-function selectAllKategori() {
-  selectedKategori = [];
-  document.querySelectorAll("#filterKategori input").forEach(cb => {
-    cb.checked = true;
-    selectedKategori.push(cb.value);
-  });
-}
-
-function clearAllKategori() {
-  selectedKategori = [];
-  document.querySelectorAll("#filterKategori input").forEach(cb => {
-    cb.checked = false;
-  });
-}
-
-function applyFilter() {
-  let from = document.getElementById("fromMonth").value;
-  let to = document.getElementById("toMonth").value;
-
-  let filtered = data.filter(d => {
-    let bulan = new Date(d.tanggal).toISOString().slice(0,7);
-
-    return (!from || bulan >= from) &&
-           (!to || bulan <= to) &&
-           (selectedKategori.length === 0 || selectedKategori.includes(d.kategori));
-  });
-
-  render(filtered);
-  toggleFilter();
-}
-
-function resetFilter() {
-  selectedKategori = [];
-  render();
-  toggleFilter();
-}
-
-// SHEET
+// UI
 function openSheet() {
   document.getElementById("sheet").classList.add("active");
-}
-
-function closeSheet() {
-  document.getElementById("sheet").classList.remove("active");
-}
-
-// DRAG
-function initSheetDrag() {
-  let sheet = document.getElementById("sheet");
-  let dragBar = document.getElementById("dragBar");
-
-  let startY = 0;
-
-  dragBar.addEventListener("touchstart", e => {
-    startY = e.touches[0].clientY;
-  });
-
-  dragBar.addEventListener("touchmove", e => {
-    let move = e.touches[0].clientY - startY;
-    if (move > 0) sheet.style.transform = `translateY(${move}px)`;
-  });
-
-  dragBar.addEventListener("touchend", e => {
-    let move = e.changedTouches[0].clientY - startY;
-    if (move > 100) closeSheet();
-    sheet.style.transform = "translateY(0)";
-  });
 }
