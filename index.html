@@ -23,13 +23,15 @@
     </div>
   </div>
 
-  <!-- 🔥 LAPORAN + FILTER -->
+  <!-- 🔥 LAPORAN -->
   <div class="report">
+
     <div style="display:flex;justify-content:space-between;align-items:center">
       <h3>📊 Laporan</h3>
       <button onclick="toggleFilter()" class="filter-btn">⚙️</button>
     </div>
 
+    <!-- FILTER -->
     <div id="filterPanel" class="filter-panel">
       <label>Dari Bulan</label>
       <input type="month" id="fromMonth">
@@ -38,14 +40,32 @@
       <input type="month" id="toMonth">
 
       <label>Kategori</label>
+
+      <div class="filter-actions">
+        <button onclick="selectAllKategori()">Select All</button>
+        <button onclick="clearAllKategori()">Clear</button>
+      </div>
+
       <div id="filterKategori" class="filter-kategori"></div>
 
       <button onclick="applyFilter()">Terapkan</button>
       <button class="btn-close" onclick="resetFilter()">Reset</button>
     </div>
 
-    <div id="laporanMasuk"></div>
-    <div id="laporanKeluar"></div>
+    <!-- PEMASUKAN -->
+    <div class="report-header" onclick="toggleMasuk()">
+      <span class="text-masuk">⬆️ Pemasukan</span>
+      <span id="iconMasuk">▼</span>
+    </div>
+    <div id="laporanMasuk" class="report-content"></div>
+
+    <!-- PENGELUARAN -->
+    <div class="report-header" onclick="toggleKeluar()">
+      <span class="text-keluar">⬇️ Pengeluaran</span>
+      <span id="iconKeluar">▼</span>
+    </div>
+    <div id="laporanKeluar" class="report-content"></div>
+
   </div>
 
   <div id="list" class="list"></div>
@@ -68,6 +88,8 @@
         <option>Transport</option>
         <option>Salary</option>
         <option>Entertainment</option>
+        <option>Motorcycle</option>
+        <option>Jajan Mas</option>
       </select>
 
       <select id="tipe">
@@ -96,6 +118,8 @@
   </div>
 
 </div>
+<div class="divider"></div>
+<div id="list" class="list"></div>
 
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -107,9 +131,6 @@ const firebaseConfig = {
   authDomain: "catatan-keuangan-37194.firebaseapp.com",
   databaseURL: "https://catatan-keuangan-37194-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "catatan-keuangan-37194",
-  storageBucket: "catatan-keuangan-37194.firebasestorage.app",
-  messagingSenderId: "883215445906",
-  appId: "1:883215445906:web:ece626b48a678afbb29b4b"
 };
 
 firebase.initializeApp(firebaseConfig);
