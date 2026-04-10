@@ -12,7 +12,23 @@ window.onload = () => {
   initSheetDrag();
 };
 
+//////////////////////////////
+// 🔥 LOCAL STORAGE
+//////////////////////////////
+function saveLocal() {
+  localStorage.setItem("keuangan", JSON.stringify(data));
+}
+
+function loadLocal() {
+  let local = localStorage.getItem("keuangan");
+  if (local) {
+    data = JSON.parse(local);
+  }
+}
+
+//////////////////////////////
 // FORMAT
+//////////////////////////////
 function formatRupiah(n) {
   return n.toLocaleString("id-ID");
 }
@@ -21,32 +37,54 @@ function formatTanggal(t) {
   return new Date(t).toISOString().split("T")[0];
 }
 
-// LOAD
+//////////////////////////////
+// 🔥 LOAD HYBRID
+//////////////////////////////
 async function loadCloud() {
-  let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-    headers: { "X-Master-Key": API_KEY }
-  });
-
-  let json = await res.json();
-  data = json.record?.data || [];
-
+  // 🔥 ambil dari local dulu (biar cepet)
+  loadLocal();
   render();
   generateKategoriFilter();
+
+  // 🔥 lalu sync dari cloud
+  try {
+    let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      headers: { "X-Master-Key": API_KEY }
+    });
+
+    let json = await res.json();
+    data = json.record?.data || [];
+
+    saveLocal(); // update local
+    render();
+    generateKategoriFilter();
+
+  } catch {
+    console.log("📴 Offline mode");
+  }
 }
 
-// SAVE
+//////////////////////////////
+// SAVE CLOUD
+//////////////////////////////
 async function saveCloud() {
-  await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Master-Key": API_KEY
-    },
-    body: JSON.stringify({ data })
-  });
+  try {
+    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Master-Key": API_KEY
+      },
+      body: JSON.stringify({ data })
+    });
+  } catch {
+    console.log("❌ Gagal sync JSONBin");
+  }
 }
 
-// 🔥 SYNC AMAN (ANTI CRASH)
+//////////////////////////////
+// 🔥 SYNC GOOGLE SHEET (AMAN)
+//////////////////////////////
 function syncToSheet() {
   fetch(SHEET_API, {
     method: "POST",
@@ -55,7 +93,9 @@ function syncToSheet() {
   }).catch(() => {});
 }
 
+//////////////////////////////
 // TAMBAH
+//////////////////////////////
 function tambahData() {
   let nama = document.getElementById("nama").value;
   let nominal = parseInt(document.getElementById("nominal").value);
@@ -71,10 +111,12 @@ function tambahData() {
   render();
   generateKategoriFilter();
 
+  // 🔥 SIMPAN KE SEMUA
+  saveLocal();
   saveCloud();
-  setTimeout(syncToSheet, 500); // 🔥 biar aman
+  setTimeout(syncToSheet, 500);
 
-  // reset
+  // reset form
   document.getElementById("nama").value = "";
   document.getElementById("nominal").value = "";
   document.getElementById("tanggal").valueAsDate = new Date();
@@ -82,7 +124,9 @@ function tambahData() {
   closeSheet();
 }
 
+//////////////////////////////
 // DELETE
+//////////////////////////////
 function openDelete(index) {
   deleteIndex = index;
   document.getElementById("popup").style.display = "flex";
@@ -94,6 +138,7 @@ function confirmDelete() {
   render();
   generateKategoriFilter();
 
+  saveLocal();
   saveCloud();
   setTimeout(syncToSheet, 500);
 
@@ -104,7 +149,9 @@ function closePopup() {
   document.getElementById("popup").style.display = "none";
 }
 
+//////////////////////////////
 // RENDER
+//////////////////////////////
 function render(listData = data) {
   let list = document.getElementById("list");
   list.innerHTML = "";
@@ -148,7 +195,9 @@ function render(listData = data) {
   renderLaporan(listData);
 }
 
+//////////////////////////////
 // LAPORAN
+//////////////////////////////
 function renderLaporan(listData = data) {
   let masukMap = {}, keluarMap = {};
 
@@ -181,7 +230,9 @@ function renderLaporan(listData = data) {
   }
 }
 
-// FILTER (BALIKIN SEMUA)
+//////////////////////////////
+// FILTER
+//////////////////////////////
 function toggleFilter() {
   let panel = document.getElementById("filterPanel");
   panel.style.display = panel.style.display === "block" ? "none" : "block";
@@ -237,7 +288,29 @@ function resetFilter() {
   document.getElementById("filterPanel").style.display = "none";
 }
 
-// SHEET DRAG
+//////////////////////////////
+// AUTO SYNC SAAT ONLINE
+//////////////////////////////
+window.addEventListener("online", () => {
+  console.log("🌐 Online lagi, sync...");
+  saveCloud();
+  syncToSheet();
+});
+
+//////////////////////////////
+// SHEET UI
+//////////////////////////////
+function openSheet() {
+  document.getElementById("sheet").classList.add("active");
+}
+
+function closeSheet() {
+  document.getElementById("sheet").classList.remove("active");
+}
+
+//////////////////////////////
+// DRAG SHEET
+//////////////////////////////
 function initSheetDrag() {
   let sheet = document.getElementById("sheet");
   let dragBar = document.getElementById("dragBar");
@@ -258,13 +331,4 @@ function initSheetDrag() {
     if (move > 100) closeSheet();
     sheet.style.transform = "translateY(0)";
   });
-}
-
-// SHEET CONTROL
-function openSheet() {
-  document.getElementById("sheet").classList.add("active");
-}
-
-function closeSheet() {
-  document.getElementById("sheet").classList.remove("active");
 }
