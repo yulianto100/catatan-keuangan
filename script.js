@@ -11,7 +11,7 @@ let itemsPerPage = 7;
 function loadData() {
   db.ref("keuangan").on("value", snapshot => {
     data = snapshot.val() || [];
-    currentPage = 1; // reset page
+    currentPage = 1;
     render();
     generateKategoriFilter();
   });
@@ -38,10 +38,8 @@ function tambahData() {
   if (!nama || !nominal) return alert("Isi semua!");
 
   if (editIndex !== null) {
-    // 🔥 EDIT MODE
     data[editIndex] = { nama, nominal, kategori, tipe, wallet, tanggal };
   } else {
-    // 🔥 TAMBAH MODE
     data.unshift({ nama, nominal, kategori, tipe, wallet, tanggal });
   }
 
@@ -49,8 +47,10 @@ function tambahData() {
   closeSheet();
 }
 
-// EDIT
-function editData(item) {
+// ✅ FIX EDIT (PAKE INDEX LANGSUNG)
+function editData(index) {
+  let item = data[index];
+
   document.getElementById("nama").value = item.nama;
   document.getElementById("nominal").value = item.nominal;
   document.getElementById("kategori").value = item.kategori;
@@ -58,16 +58,13 @@ function editData(item) {
   document.getElementById("wallet").value = item.wallet;
   document.getElementById("tanggal").value = item.tanggal;
 
-  editIndex = data.findIndex(d =>
-    d.nama === item.nama &&
-    d.nominal === item.nominal &&
-    d.tanggal === item.tanggal
-  );
+  editIndex = index;
 
   document.getElementById("formTitle").innerText = "Edit Transaksi";
 
   openSheet(true);
 }
+
 // DELETE
 function openDelete(index) {
   deleteIndex = index;
@@ -101,7 +98,6 @@ function render(listData = data) {
     }
   });
 
-  // 🔥 PAGINATION LOGIC
   let start = (currentPage - 1) * itemsPerPage;
   let end = start + itemsPerPage;
   let paginatedData = listData.slice(start, end);
@@ -110,7 +106,7 @@ function render(listData = data) {
     let warna = item.tipe === "masuk" ? "#22c55e" : "#ef4444";
 
     list.innerHTML += `
-      <div class="item" onclick='editData(${JSON.stringify(item)})'>
+      <div class="item" onclick="editData(${start + i})">
         <div class="item-left">
           <div class="item-title">${item.nama}</div>
           <div class="item-sub">${item.kategori} • ${item.tanggal}</div>
@@ -126,7 +122,6 @@ function render(listData = data) {
     `;
   });
 
-  // 🔥 PAGINATION UI
   let totalPages = Math.ceil(listData.length / itemsPerPage);
 
   list.innerHTML += `
@@ -148,7 +143,7 @@ function render(listData = data) {
   renderLaporan(listData);
 }
 
-// 🔥 NEXT PAGE
+// PAGINATION
 function nextPage(totalData) {
   let totalPages = Math.ceil(totalData / itemsPerPage);
   if (currentPage < totalPages) {
@@ -157,7 +152,6 @@ function nextPage(totalData) {
   }
 }
 
-// 🔥 PREV PAGE
 function prevPage() {
   if (currentPage > 1) {
     currentPage--;
@@ -165,7 +159,7 @@ function prevPage() {
   }
 }
 
-// LAPORAN
+// LAPORAN (tetep sama)
 function renderLaporan(listData = data) {
   let masukMap = {}, keluarMap = {};
   let totalMasuk = 0;
@@ -212,7 +206,7 @@ function renderLaporan(listData = data) {
   }
 }
 
-// TOGGLE
+// FILTER dll (biarin sama)
 function toggleMasuk() {
   let el = document.getElementById("laporanMasuk");
   el.style.display = el.style.display === "block" ? "none" : "block";
@@ -223,13 +217,11 @@ function toggleKeluar() {
   el.style.display = el.style.display === "block" ? "none" : "block";
 }
 
-// FILTER PANEL
 function toggleFilter() {
   let panel = document.getElementById("filterPanel");
   panel.style.display = panel.style.display === "block" ? "none" : "block";
 }
 
-// GENERATE KATEGORI
 function generateKategoriFilter() {
   let container = document.getElementById("filterKategori");
   if (!container) return;
@@ -239,16 +231,15 @@ function generateKategoriFilter() {
   container.innerHTML = "";
 
   unik.forEach(k => {
-    container.innerHTML += `
-      <div class="filter-item">
-        <input type="checkbox" value="${k}" onchange="updateKategori(this)">
-        <span>${k}</span>
-      </div>
-    `;
+container.innerHTML += `
+  <label class="filter-item">
+    <input type="checkbox" value="${k}" onchange="updateKategori(this)">
+    <span>${k}</span>
+  </label>
+`;
   });
 }
 
-// UPDATE KATEGORI
 function updateKategori(el) {
   if (el.checked) {
     if (!selectedKategori.includes(el.value)) {
@@ -259,7 +250,6 @@ function updateKategori(el) {
   }
 }
 
-// SELECT ALL
 function selectAllKategori() {
   selectedKategori = [];
   document.querySelectorAll("#filterKategori input").forEach(cb => {
@@ -268,7 +258,6 @@ function selectAllKategori() {
   });
 }
 
-// CLEAR
 function clearAllKategori() {
   selectedKategori = [];
   document.querySelectorAll("#filterKategori input").forEach(cb => {
@@ -276,7 +265,6 @@ function clearAllKategori() {
   });
 }
 
-// APPLY FILTER
 function applyFilter() {
   let from = document.getElementById("fromMonth").value;
   let to = document.getElementById("toMonth").value;
@@ -289,12 +277,11 @@ function applyFilter() {
            (selectedKategori.length === 0 || selectedKategori.includes(d.kategori));
   });
 
-  currentPage = 1; // 🔥 penting biar gak bug
+  currentPage = 1;
   render(filtered);
   toggleFilter();
 }
 
-// RESET
 function resetFilter() {
   selectedKategori = [];
   currentPage = 1;
@@ -304,11 +291,11 @@ function resetFilter() {
 
 // SHEET
 function openSheet(isEdit = false) {
+  document.body.classList.add("sheet-open");
+
   if (!isEdit) {
     editIndex = null;
-
     document.getElementById("formTitle").innerText = "Tambah Transaksi";
-
     document.getElementById("nama").value = "";
     document.getElementById("nominal").value = "";
     document.getElementById("tanggal").valueAsDate = new Date();
@@ -318,21 +305,12 @@ function openSheet(isEdit = false) {
 }
 
 function closeSheet() {
+  document.body.classList.remove("sheet-open");
   document.getElementById("sheet").classList.remove("active");
-  editIndex = null; // 🔥 extra safety
+  editIndex = null;
 }
 
-// JADI Title Case
-
-function toTitleCase(text) {
-  return text
-    .toLowerCase()
-    .split(" ")
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-// DRAG
+// DRAG (tetep sama)
 function initSheetDrag() {
   let sheet = document.getElementById("sheet");
   let dragBar = document.getElementById("dragBar");
