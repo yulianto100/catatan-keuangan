@@ -106,7 +106,7 @@ function render(listData = data) {
     let warna = item.tipe === "masuk" ? "#22c55e" : "#ef4444";
 
     list.innerHTML += `
-      <div class="item" onclick="editData(${start + i})">
+      <div class="item" onclick="editDataByItem(${JSON.stringify(item).replace(/"/g, '&quot;')})">
         <div class="item-left">
           <div class="item-title">${item.nama}</div>
           <div class="item-sub">${item.kategori} • ${item.tanggal}</div>
@@ -157,6 +157,19 @@ function prevPage() {
     currentPage--;
     render();
   }
+}
+
+
+function editDataByItem(item) {
+  let index = data.findIndex(d =>
+    d.nama === item.nama &&
+    d.nominal === item.nominal &&
+    d.tanggal === item.tanggal
+  );
+
+  if (index === -1) return;
+
+  editData(index);
 }
 
 // LAPORAN (tetep sama)
