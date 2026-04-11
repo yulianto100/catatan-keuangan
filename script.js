@@ -1,6 +1,7 @@
 let data = [];
 let deleteIndex = null;
 let selectedKategori = [];
+let editIndex = null;
 
 // 🔥 PAGINATION
 let currentPage = 1;
@@ -26,7 +27,6 @@ window.onload = () => {
   initSheetDrag();
 };
 
-// TAMBAH
 function tambahData() {
   let nama = document.getElementById("nama").value;
   let nominal = parseInt(document.getElementById("nominal").value);
@@ -37,16 +37,37 @@ function tambahData() {
 
   if (!nama || !nominal) return alert("Isi semua!");
 
-  data.unshift({ nama, nominal, kategori, tipe, wallet, tanggal });
+  if (editIndex !== null) {
+    // 🔥 EDIT MODE
+    data[editIndex] = { nama, nominal, kategori, tipe, wallet, tanggal };
+  } else {
+    // 🔥 TAMBAH MODE
+    data.unshift({ nama, nominal, kategori, tipe, wallet, tanggal });
+  }
+
   saveData();
-
-  document.getElementById("nama").value = "";
-  document.getElementById("nominal").value = "";
-  document.getElementById("tanggal").valueAsDate = new Date();
-
   closeSheet();
 }
 
+// EDIT
+function editData(item) {
+  document.getElementById("nama").value = item.nama;
+  document.getElementById("nominal").value = item.nominal;
+  document.getElementById("kategori").value = item.kategori;
+  document.getElementById("tipe").value = item.tipe;
+  document.getElementById("wallet").value = item.wallet;
+  document.getElementById("tanggal").value = item.tanggal;
+
+  editIndex = data.findIndex(d =>
+    d.nama === item.nama &&
+    d.nominal === item.nominal &&
+    d.tanggal === item.tanggal
+  );
+
+  document.getElementById("formTitle").innerText = "Edit Transaksi";
+
+  openSheet(true);
+}
 // DELETE
 function openDelete(index) {
   deleteIndex = index;
@@ -89,7 +110,7 @@ function render(listData = data) {
     let warna = item.tipe === "masuk" ? "#22c55e" : "#ef4444";
 
     list.innerHTML += `
-      <div class="item">
+      <div class="item" onclick='editData(${JSON.stringify(item)})'>
         <div class="item-left">
           <div class="item-title">${item.nama}</div>
           <div class="item-sub">${item.kategori} • ${item.tanggal}</div>
@@ -99,7 +120,7 @@ function render(listData = data) {
           <div style="color:${warna}">
             Rp ${item.nominal.toLocaleString("id-ID")}
           </div>
-          <button class="delete-btn" onclick="openDelete(${start + i})">Hapus</button>
+          <button class="delete-btn" onclick="event.stopPropagation(); openDelete(${start + i})">Hapus</button>
         </div>
       </div>
     `;
@@ -282,14 +303,33 @@ function resetFilter() {
 }
 
 // SHEET
-function openSheet() {
+function openSheet(isEdit = false) {
+  if (!isEdit) {
+    editIndex = null;
+
+    document.getElementById("formTitle").innerText = "Tambah Transaksi";
+
+    document.getElementById("nama").value = "";
+    document.getElementById("nominal").value = "";
+    document.getElementById("tanggal").valueAsDate = new Date();
+  }
+
   document.getElementById("sheet").classList.add("active");
-  document.body.classList.add("sheet-open"); // 🔥 tambah ini
 }
 
 function closeSheet() {
   document.getElementById("sheet").classList.remove("active");
-  document.body.classList.remove("sheet-open"); // 🔥 tambah ini
+  editIndex = null; // 🔥 extra safety
+}
+
+// JADI Title Case
+
+function toTitleCase(text) {
+  return text
+    .toLowerCase()
+    .split(" ")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 // DRAG
