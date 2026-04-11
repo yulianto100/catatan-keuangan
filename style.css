@@ -240,16 +240,40 @@ button {
 }
 
 /* INPUT */
-input, select {
+input,
+select {
   width: 100%;
-  min-height: 48px;
-  height: 48px;
+  height: 56px; /* 🔥 samain semua */
+  
   margin: 6px 0;
-  border-radius: 12px;
+  padding: 0 16px;
+
+  border-radius: 16px; /* 🔥 samain rounded */
   border: none;
-  padding: 12px;
+
   background: #e5e7eb;
   color: black;
+
+  font-size: 16px;
+
+  box-sizing: border-box;
+  appearance: none; /* 🔥 hilangin style aneh bawaan */
+}
+
+input[type="date"] {
+  display: flex;
+  align-items: center;
+}
+
+input[type="text"],
+input[type="number"] {
+  line-height: normal;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #22c55e;
 }
 
 html, body {
