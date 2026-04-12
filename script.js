@@ -515,3 +515,12 @@ function resetForm() {
 
   toggleTransfer();
 }
+
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  console.log("PWA siap diinstall 🔥");
+});
