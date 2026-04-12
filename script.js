@@ -2,54 +2,131 @@ let data = [];
 let deleteIndex = null;
 let selectedKategori = [];
 let editIndex = null;
+let currentFilteredData = [];
 
-// 🔥 PAGINATION
 let currentPage = 1;
 let itemsPerPage = 7;
 
-// LOAD
+// ============================
+// LOAD DATA
+// ============================
 function loadData() {
   db.ref("keuangan").on("value", snapshot => {
-    data = snapshot.val() || [];
+    let val = snapshot.val() || {};
+
+    data = Object.keys(val).map(key => ({
+      ...val[key],
+      firebaseKey: key
+    }));
+
+    // 🔥 SORT TERBARU DI ATAS (PALING PENTING)
+    data.sort((a, b) => b.id - a.id);
+
     currentPage = 1;
     render();
     generateKategoriFilter();
   });
 }
 
-function saveData() {
-  db.ref("keuangan").set(data);
-}
-
 window.onload = () => {
   loadData();
-  document.getElementById("tanggal").valueAsDate = new Date();
+
+  let tgl = document.getElementById("tanggal");
+  if (tgl) tgl.valueAsDate = new Date();
+
   initSheetDrag();
+  toggleTransfer();
 };
 
+// ============================
+// TAMBAH / EDIT / TRANSFER
+// ============================
+function generateId() {
+  return Date.now().toString() + Math.floor(Math.random() * 1000);
+}
+
 function tambahData() {
+  let tanggal = document.getElementById("tanggal").value;
   let nama = document.getElementById("nama").value;
   let nominal = parseInt(document.getElementById("nominal").value);
   let kategori = document.getElementById("kategori").value;
   let tipe = document.getElementById("tipe").value;
   let wallet = document.getElementById("wallet").value;
-  let tanggal = document.getElementById("tanggal").value;
+  let isTransfer = document.getElementById("isTransfer").value;
 
-  if (!nama || !nominal) return alert("Isi semua!");
+  if (!nominal) return alert("Isi nominal!");
 
-  if (editIndex !== null) {
-    data[editIndex] = { nama, nominal, kategori, tipe, wallet, tanggal };
-  } else {
-    data.unshift({ nama, nominal, kategori, tipe, wallet, tanggal });
+  // ================= EDIT =================
+  if (editIndex) {
+    db.ref("keuangan/" + editIndex).update({
+      tanggal,
+      nama,
+      nominal,
+      kategori,
+      tipe,
+      wallet
+    });
+    editIndex = null; // 🔥 WAJIB
+    closeSheet();
+    resetForm(); // 🔥 TAMBAHIN INI
+    return;
   }
 
-  saveData();
+  // ================= TRANSFER =================
+  if (isTransfer === "yes") {
+    let from = document.getElementById("fromWallet").value;
+    let to = document.getElementById("toWallet").value;
+
+    if (from === to) return alert("Wallet tidak boleh sama!");
+
+    let id1 = generateId();
+    let id2 = generateId();
+
+    db.ref("keuangan/" + id1).set({
+      id: id1,
+      tanggal,
+      nama: "Transfer ke " + to,
+      nominal,
+      kategori: "Transfer",
+      tipe: "keluar",
+      wallet: from
+    });
+
+    db.ref("keuangan/" + id2).set({
+      id: id2,
+      tanggal,
+      nama: "Transfer dari " + from,
+      nominal,
+      kategori: "Transfer",
+      tipe: "masuk",
+      wallet: to
+    });
+
+  } else {
+    let id = generateId();
+
+    db.ref("keuangan/" + id).set({
+      id,
+      tanggal,
+      nama,
+      nominal,
+      kategori,
+      tipe,
+      wallet
+    });
+  }
+
   closeSheet();
 }
 
-// ✅ FIX EDIT (PAKE INDEX LANGSUNG)
-function editData(index) {
-  let item = data[index];
+// ============================
+// EDIT
+// ============================
+function editDataById(id) {
+  let item = data.find(d => d.firebaseKey == id);
+  if (!item) return;
+
+  openSheet(true);
 
   document.getElementById("nama").value = item.nama;
   document.getElementById("nominal").value = item.nominal;
@@ -58,178 +135,204 @@ function editData(index) {
   document.getElementById("wallet").value = item.wallet;
   document.getElementById("tanggal").value = item.tanggal;
 
-  editIndex = index;
+  if (item.kategori === "Transfer") {
+    document.getElementById("isTransfer").value = "yes";
+  } else {
+    document.getElementById("isTransfer").value = "no";
+  }
 
+  toggleTransfer();
+
+  editIndex = id;
   document.getElementById("formTitle").innerText = "Edit Transaksi";
-
-  openSheet(true);
 }
 
+// ============================
 // DELETE
-function openDelete(index) {
-  deleteIndex = index;
+// ============================
+function openDelete(key) {
+  deleteIndex = key;
   document.getElementById("popup").style.display = "flex";
 }
 
 function confirmDelete() {
-  data.splice(deleteIndex, 1);
-  saveData();
+  db.ref("keuangan/" + deleteIndex).remove();
   closePopup();
 }
 
 function closePopup() {
-  document.getElementById("popup").style.display = "none";
+  let popup = document.getElementById("popup");
+  popup.style.display = "none";
 }
 
+// ============================
 // RENDER
+// ============================
 function render(listData = data) {
+  currentFilteredData = listData;
+
   let list = document.getElementById("list");
   list.innerHTML = "";
 
   let saldo = 0, masuk = 0, keluar = 0;
+  let cash = 0, bank = 0, ewallet = 0;
 
   listData.forEach(item => {
-    if (item.tipe === "masuk") {
-      saldo += item.nominal;
-      masuk += item.nominal;
-    } else {
-      saldo -= item.nominal;
-      keluar += item.nominal;
-    }
+    let isMasuk = item.tipe === "masuk";
+
+    saldo += isMasuk ? item.nominal : -item.nominal;
+    masuk += isMasuk ? item.nominal : 0;
+    keluar += !isMasuk ? item.nominal : 0;
+
+    let val = isMasuk ? item.nominal : -item.nominal;
+
+    if (item.wallet === "Cash") cash += val;
+    if (item.wallet === "Bank") bank += val;
+    if (item.wallet === "E-Wallet") ewallet += val;
   });
 
   let start = (currentPage - 1) * itemsPerPage;
-  let end = start + itemsPerPage;
-  let paginatedData = listData.slice(start, end);
+  let paginatedData = listData.slice(start, start + itemsPerPage);
 
-  paginatedData.forEach((item, i) => {
+  paginatedData.forEach(item => {
     let warna = item.tipe === "masuk" ? "#22c55e" : "#ef4444";
 
     list.innerHTML += `
-      <div class="item" onclick="editDataByItem(${JSON.stringify(item).replace(/"/g, '&quot;')})">
-        <div class="item-left">
-          <div class="item-title">${item.nama}</div>
-          <div class="item-sub">${item.kategori} • ${item.tanggal}</div>
+      <div class="item" onclick="editDataById('${item.firebaseKey}')">
+        <div>
+          <b>${item.nama}</b><br>
+          <small>${item.kategori} • ${item.tanggal}</small>
         </div>
 
-        <div class="item-right">
+        <div style="text-align:right">
           <div style="color:${warna}">
             Rp ${item.nominal.toLocaleString("id-ID")}
           </div>
-          <button class="delete-btn" onclick="event.stopPropagation(); openDelete(${start + i})">Hapus</button>
+          <button onclick="event.stopPropagation(); openDelete('${item.firebaseKey}')">
+            Hapus
+          </button>
         </div>
       </div>
     `;
   });
 
-  let totalPages = Math.ceil(listData.length / itemsPerPage);
-
-  list.innerHTML += `
-    <div style="display:flex;justify-content:center;gap:10px;margin-top:12px;">
-      <button onclick="prevPage()" ${currentPage === 1 ? "disabled" : ""}>Prev</button>
-      <span>Page ${currentPage} / ${totalPages || 1}</span>
-      <button onclick="nextPage(${listData.length})" ${currentPage === totalPages ? "disabled" : ""}>Next</button>
-    </div>
-  `;
-
-  let saldoText = saldo < 0 
-    ? `- Rp${Math.abs(saldo).toLocaleString("id-ID")}` 
-    : `Rp ${saldo.toLocaleString("id-ID")}`;
-
-  document.getElementById("saldo").innerText = saldoText;
+  document.getElementById("saldo").innerText = "Rp " + saldo.toLocaleString("id-ID");
   document.getElementById("totalMasuk").innerText = "Rp " + masuk.toLocaleString("id-ID");
   document.getElementById("totalKeluar").innerText = "Rp " + keluar.toLocaleString("id-ID");
 
+  document.getElementById("saldoCash").innerText = "Rp " + cash.toLocaleString("id-ID");
+  document.getElementById("saldoBank").innerText = "Rp " + bank.toLocaleString("id-ID");
+  document.getElementById("saldoEwallet").innerText = "Rp " + ewallet.toLocaleString("id-ID");
+
   renderLaporan(listData);
+  let totalPages = Math.ceil(listData.length / itemsPerPage);
+
+list.innerHTML += `
+  <div style="display:flex;justify-content:center;gap:10px;margin-top:12px;">
+    <button onclick="prevPage()" ${currentPage === 1 ? "disabled" : ""}>Prev</button>
+    <span>Page ${currentPage} / ${totalPages || 1}</span>
+    <button onclick="nextPage(${listData.length})" ${currentPage === totalPages ? "disabled" : ""}>Next</button>
+  </div>
+`;
 }
 
-// PAGINATION
-function nextPage(totalData) {
-  let totalPages = Math.ceil(totalData / itemsPerPage);
-  if (currentPage < totalPages) {
-    currentPage++;
-    render();
+// ============================
+// UI
+// ============================
+function openTypePopup() {
+  let el = document.getElementById("popupType");
+
+  el.style.display = "flex";
+  el.classList.add("active");
+
+  el.style.pointerEvents = "auto"; // 🔥 WAJIB
+}
+
+function closeTypePopup() {
+  let el = document.getElementById("popupType");
+
+  el.style.display = "none";
+  el.classList.remove("active");
+
+  // 🔥 TAMBAHAN WAJIB
+  el.style.pointerEvents = "none";
+}
+
+function openForm(type) {
+  closeTypePopup();
+  openSheet();
+
+  document.getElementById("isTransfer").value =
+    type === "transfer" ? "yes" : "no";
+
+  toggleTransfer();
+}
+
+function openSheet(isEdit = false) {
+  closeTypePopup();
+
+  let sheet = document.getElementById("sheet");
+
+  sheet.classList.add("active");
+
+  sheet.style.pointerEvents = "auto";
+  sheet.style.transform = "translateY(0)"; // 🔥 INI KUNCI
+
+  if (!isEdit) {
+    editIndex = null;
+    document.getElementById("formTitle").innerText = "Tambah Transaksi";
+    resetForm(); // 🔥 BIAR SELALU FRESH
   }
 }
 
-function prevPage() {
-  if (currentPage > 1) {
-    currentPage--;
-    render();
-  }
+function closeSheet() {
+  let sheet = document.getElementById("sheet");
+
+  sheet.classList.remove("active");
+  sheet.style.transform = "translateY(100%)"; // 🔥 konsisten
+  sheet.style.pointerEvents = "none";
 }
 
-
-function editDataByItem(item) {
-  let index = data.findIndex(d =>
-    d.nama === item.nama &&
-    d.nominal === item.nominal &&
-    d.tanggal === item.tanggal
-  );
-
-  if (index === -1) return;
-
-  editData(index);
-}
-
-// LAPORAN (tetep sama)
-function renderLaporan(listData = data) {
-  let masukMap = {}, keluarMap = {};
-  let totalMasuk = 0;
-  let totalKeluar = 0;
-
-  listData.forEach(item => {
-    if (item.tipe === "masuk") {
-      masukMap[item.kategori] = (masukMap[item.kategori] || 0) + item.nominal;
-      totalMasuk += item.nominal;
-    } else {
-      keluarMap[item.kategori] = (keluarMap[item.kategori] || 0) + item.nominal;
-      totalKeluar += item.nominal;
-    }
-  });
-
-  document.getElementById("totalMasukReport").innerText =
-    "Rp " + totalMasuk.toLocaleString("id-ID");
-
-  document.getElementById("totalKeluarReport").innerText =
-    "Rp " + totalKeluar.toLocaleString("id-ID");
-
-  let masukEl = document.getElementById("laporanMasuk");
-  masukEl.innerHTML = "";
-
-  for (let k in masukMap) {
-    masukEl.innerHTML += `
-      <div class="report-item text-masuk">
-        <span>${k}</span>
-        <b>Rp ${masukMap[k].toLocaleString("id-ID")}</b>
-      </div>
-    `;
-  }
-
-  let keluarEl = document.getElementById("laporanKeluar");
-  keluarEl.innerHTML = "";
-
-  for (let k in keluarMap) {
-    keluarEl.innerHTML += `
-      <div class="report-item text-keluar">
-        <span>${k}</span>
-        <b>Rp ${keluarMap[k].toLocaleString("id-ID")}</b>
-      </div>
-    `;
-  }
-}
-
-// FILTER dll (biarin sama)
 function toggleMasuk() {
   let el = document.getElementById("laporanMasuk");
-  el.style.display = el.style.display === "block" ? "none" : "block";
+  let arrow = document.getElementById("arrowMasuk");
+
+  let isOpen = el.style.display === "block";
+
+  el.style.display = isOpen ? "none" : "block";
+  arrow.innerText = isOpen ? "▼" : "▲";
 }
 
 function toggleKeluar() {
   let el = document.getElementById("laporanKeluar");
-  el.style.display = el.style.display === "block" ? "none" : "block";
+  let arrow = document.getElementById("arrowKeluar");
+
+  let isOpen = el.style.display === "block";
+
+  el.style.display = isOpen ? "none" : "block";
+  arrow.innerText = isOpen ? "▼" : "▲";
 }
 
+
+
+function toggleTransfer() {
+  let val = document.getElementById("isTransfer").value;
+
+  let transferBox = document.getElementById("transferBox");
+  let normalField = document.getElementById("normalField");
+
+  if (val === "yes") {
+    transferBox.style.display = "block";
+    normalField.style.display = "none";
+  } else {
+    transferBox.style.display = "none";
+    normalField.style.display = "block";
+  }
+}
+
+// ============================
+// FILTER & EXPORT (UNCHANGED)
+// ============================
 function toggleFilter() {
   let panel = document.getElementById("filterPanel");
   panel.style.display = panel.style.display === "block" ? "none" : "block";
@@ -237,93 +340,66 @@ function toggleFilter() {
 
 function generateKategoriFilter() {
   let container = document.getElementById("filterKategori");
-  if (!container) return;
-
-  let unik = [...new Set(data.map(d => d.kategori))];
-
   container.innerHTML = "";
 
-  unik.forEach(k => {
-container.innerHTML += `
-  <label class="filter-item">
-    <input type="checkbox" value="${k}" onchange="updateKategori(this)">
-    <span>${k}</span>
-  </label>
-`;
+  let kategoriList = [...new Set(data.map(d => d.kategori))];
+
+  kategoriList.forEach(k => {
+    container.innerHTML += `
+      <label class="kategori-item">
+        <input 
+          type="checkbox" 
+          value="${k}" 
+          onchange="updateKategori(this)"
+        >
+        <span>${k}</span>
+      </label>
+    `;
   });
 }
 
 function updateKategori(el) {
-  if (el.checked) {
-    if (!selectedKategori.includes(el.value)) {
-      selectedKategori.push(el.value);
-    }
-  } else {
-    selectedKategori = selectedKategori.filter(k => k !== el.value);
-  }
-}
-
-function selectAllKategori() {
-  selectedKategori = [];
-  document.querySelectorAll("#filterKategori input").forEach(cb => {
-    cb.checked = true;
-    selectedKategori.push(cb.value);
-  });
-}
-
-function clearAllKategori() {
-  selectedKategori = [];
-  document.querySelectorAll("#filterKategori input").forEach(cb => {
-    cb.checked = false;
-  });
+  if (el.checked) selectedKategori.push(el.value);
+  else selectedKategori = selectedKategori.filter(k => k !== el.value);
 }
 
 function applyFilter() {
-  let from = document.getElementById("fromMonth").value;
-  let to = document.getElementById("toMonth").value;
-
-  let filtered = data.filter(d => {
-    let bulan = new Date(d.tanggal).toISOString().slice(0,7);
-
-    return (!from || bulan >= from) &&
-           (!to || bulan <= to) &&
-           (selectedKategori.length === 0 || selectedKategori.includes(d.kategori));
-  });
-
-  currentPage = 1;
+  let filtered = data.filter(item =>
+    selectedKategori.length === 0 || selectedKategori.includes(item.kategori)
+  );
+  currentPage = 1; // 🔥 WAJIB
   render(filtered);
-  toggleFilter();
 }
 
 function resetFilter() {
   selectedKategori = [];
   currentPage = 1;
-  render();
-  toggleFilter();
+  render(data);
 }
 
-// SHEET
-function openSheet(isEdit = false) {
-  document.body.classList.add("sheet-open");
+function exportExcel() {
+  if (!currentFilteredData.length) return alert("Tidak ada data");
 
-  if (!isEdit) {
-    editIndex = null;
-    document.getElementById("formTitle").innerText = "Tambah Transaksi";
-    document.getElementById("nama").value = "";
-    document.getElementById("nominal").value = "";
-    document.getElementById("tanggal").valueAsDate = new Date();
-  }
+  let ws = XLSX.utils.json_to_sheet(currentFilteredData);
+  let wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Data");
 
-  document.getElementById("sheet").classList.add("active");
+  XLSX.writeFile(wb, "keuangan.xlsx");
 }
 
-function closeSheet() {
-  document.body.classList.remove("sheet-open");
-  document.getElementById("sheet").classList.remove("active");
-  editIndex = null;
+function selectAllKategori() {
+  selectedKategori = [...new Set(data.map(d => d.kategori))];
+  render(data);
 }
 
-// DRAG (tetep sama)
+function clearAllKategori() {
+  selectedKategori = [];
+  render(data);
+}
+
+// ============================
+// DRAG
+// ============================
 function initSheetDrag() {
   let sheet = document.getElementById("sheet");
   let dragBar = document.getElementById("dragBar");
@@ -346,4 +422,96 @@ function initSheetDrag() {
     if (move > 100) closeSheet();
     sheet.style.transform = "translateY(0)";
   });
+}
+
+function renderLaporan(listData) {
+  let masuk = 0;
+  let keluar = 0;
+
+  let kategoriMasuk = {};
+  let kategoriKeluar = {};
+
+  listData.forEach(item => {
+    if (item.tipe === "masuk") {
+      masuk += item.nominal;
+
+      if (!kategoriMasuk[item.kategori]) {
+        kategoriMasuk[item.kategori] = 0;
+      }
+      kategoriMasuk[item.kategori] += item.nominal;
+
+    } else {
+      keluar += item.nominal;
+
+      if (!kategoriKeluar[item.kategori]) {
+        kategoriKeluar[item.kategori] = 0;
+      }
+      kategoriKeluar[item.kategori] += item.nominal;
+    }
+  });
+
+  // 🔥 TOTAL
+  document.getElementById("totalMasukReport").innerText =
+    "Rp " + masuk.toLocaleString("id-ID");
+
+  document.getElementById("totalKeluarReport").innerText =
+    "Rp " + keluar.toLocaleString("id-ID");
+
+  // 🔥 RENDER DETAIL
+  let masukHTML = "";
+  for (let k in kategoriMasuk) {
+    masukHTML += `
+      <div class="report-item">
+        <span>${k}</span>
+        <b>Rp ${kategoriMasuk[k].toLocaleString("id-ID")}</b>
+      </div>
+    `;
+  }
+
+  let keluarHTML = "";
+  for (let k in kategoriKeluar) {
+    keluarHTML += `
+      <div class="report-item">
+        <span>${k}</span>
+        <b>Rp ${kategoriKeluar[k].toLocaleString("id-ID")}</b>
+      </div>
+    `;
+  }
+
+  document.getElementById("laporanMasuk").innerHTML = masukHTML;
+  document.getElementById("laporanKeluar").innerHTML = keluarHTML;
+}
+
+function nextPage(total) {
+  let totalPages = Math.ceil(total / itemsPerPage);
+  if (currentPage < totalPages) {
+    currentPage++;
+    render(currentFilteredData);
+  }
+}
+
+function prevPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    render(currentFilteredData);
+  }
+}
+
+function resetForm() {
+  document.getElementById("nama").value = "";
+  document.getElementById("nominal").value = "";
+  document.getElementById("kategori").value = "Bills";
+  document.getElementById("tipe").value = "masuk";
+  document.getElementById("wallet").value = "Cash";
+  document.getElementById("isTransfer").value = "no";
+
+  // tanggal = hari ini
+  let tgl = document.getElementById("tanggal");
+  if (tgl) tgl.valueAsDate = new Date();
+
+  // reset transfer
+  document.getElementById("fromWallet").value = "Cash";
+  document.getElementById("toWallet").value = "Bank";
+
+  toggleTransfer();
 }
