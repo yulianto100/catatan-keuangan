@@ -1,4 +1,4 @@
-const CACHE_NAME = "keuangan-app-v3";
+const CACHE_NAME = "keuangan-app-v4";
 
 self.addEventListener("install", event => {
   self.skipWaiting();
@@ -32,6 +32,8 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    caches.match(event.request).then(res => {
+      return res || fetch(event.request);
+    })
   );
 });
