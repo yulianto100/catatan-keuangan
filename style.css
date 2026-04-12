@@ -117,10 +117,42 @@ body.sheet-open .fab {
   transform: scale(0.8);
   transition: 0.2s;
 }
+.report-item {
+  padding: 10px;
+  margin-top: 6px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  background: #020617;
+}
 
+.popup-box h3 {
+  margin-bottom: 15px;
+}
+
+.btn-primary {
+  width: 100%;
+  margin-bottom: 10px;
+  background: #22c55e;
+}
+
+.btn-secondary {
+  width: 100%;
+  margin-bottom: 10px;
+  background: #3b82f6;
+}
+
+#popupType {
+  z-index: 999999 !important;
+}
 .item:hover {
   transform: scale(1.01);
   transition: 0.2s;
+}
+
+.popup.active {
+  display: flex;
+  pointer-events: all;
 }
 
 .popup {
@@ -171,20 +203,10 @@ body.sheet-open .fab {
   width: 80%;
 }
 
-.filter-item {
-  padding: 6px 8px;
-  border-radius: 8px;
-  transition: 0.2s;
-  cursor: pointer;
-}
-
 .filter-item:hover {
   background: rgba(255,255,255,0.05);
 }
 
-.filter-item span {
-  flex: 1;
-}
 
 .filter-panel {
   display: none;
@@ -193,10 +215,44 @@ body.sheet-open .fab {
   border-radius: 12px;
   margin-top: 10px;
   position: relative;
-  z-index: 1000; /* 🔥 ini bikin bisa diklik */
+  z-index: 99999; /* 🔥 harus lebih tinggi dari sheet */
 }
 
+.wallet-saldo {
+  margin-top: 10px;
+  font-size: 13px;
+  opacity: 0.9;
 
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wallet-saldo div {
+  background: rgba(0,0,0,0.15);
+  padding: 6px 10px;
+  border-radius: 10px;
+}
+
+@media (max-width: 480px) {
+  .filter-kategori {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 768px) {
+  .filter-kategori {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.filter-kategori {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 🔥 2 kolom */
+  gap: 10px;
+  margin-top: 10px;
+}
 
 
 
@@ -284,26 +340,91 @@ html, body {
 /* SHEET */
 .sheet {
   position: fixed;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0; /* 🔥 penting */
+
+  height: auto; /* 🔥 jangan fullscreen lagi */
+
   z-index: 9999;
+  pointer-events: none;
 
   display: flex;
-  flex-direction: column;
   justify-content: flex-end;
 
   background: rgba(0,0,0,0.3);
 
-  transform: translateY(110%);
-  transition: transform 0.3s ease;
+  transform: translateY(100%);
+  transition: transform 0.3s;
+}
+
+.kategori-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.kategori-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.03);
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.kategori-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.kategori-item input {
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+#filterKategori {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.kategori-item input:checked + span {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.kategori-item span {
+  flex: 1;
+}
+
+.kategori-item input {
+  accent-color: #22c55e;
+}
+
+.kategori-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  justify-content: flex-start; /* 🔥 INI PENTING */
+}
+
+.kategori-item input {
+  transform: scale(1.2);
 }
 
 
-
 .sheet-box {
-  background: #1e293b;
   width: 100%;
-  height: 90%; /* 🔥 ini kunci */
-  max-height: 90%;
+  height: 90vh; /* 🔥 pakai viewport */
+  max-height: 90vh;
+
+  background: #1e293b;
   border-radius: 20px 20px 0 0;
 
   display: flex;
