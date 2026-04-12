@@ -403,6 +403,42 @@ html, body {
   accent-color: #22c55e;
 }
 
+#filterKategori .kategori-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#filterKategori input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+body {
+  background:
+    linear-gradient(135deg, #8EB69B, #5f8f74),
+    repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,0.06) 0px,
+      rgba(255,255,255,0.06) 150px,
+      transparent 150px,
+      transparent 300px
+    );
+  background-blend-mode: soft-light;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top, rgba(255,255,255,0.2), transparent);
+  pointer-events: none;
+}
+
+#filterKategori label {
+  display: flex !important;
+}
+
 .kategori-item {
   display: flex;
   align-items: center;
