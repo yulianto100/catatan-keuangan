@@ -3,7 +3,7 @@
   "short_name": "Keuangan",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0f172a",
+  "background_color": "#8EB69B",
   "theme_color": "#22c55e",
   "icons": [
     {
