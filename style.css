@@ -126,16 +126,6 @@ body {
   margin-top: 16px;
 }
 
-.report-header {
-  width: 100%;
-  box-sizing: border-box;
-  border-radius: 16px;
-  padding: 14px 16px;
-}
-
-.report-header {
-  padding-right: 10px;
-}
 
 body.sheet-open .fab {
   opacity: 0;
@@ -217,10 +207,27 @@ body.sheet-open .fab {
               inset 0 -10px 10px -10px rgba(0,0,0,0.3);
 }
 
+.report-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 8px;
+  overflow: hidden; /* potong kalau overflow */
+}
+
+/* div kiri: "⬆️ Pemasukan" */
+.report-header > div:first-child {
+  flex: 1;
+  min-width: 0;         /* 🔥 INI KUNCI */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* div kanan: nominal + arrow */
 .report-header > div:last-child {
-  white-space: nowrap !important;
-  flex-shrink: 0 !important;
-  min-width: fit-content !important;
+  flex-shrink: 0;       /* 🔥 jangan menyusut */
+  white-space: nowrap;
 }
 
 .report {
@@ -241,19 +248,14 @@ body.sheet-open .fab {
   padding-bottom: 140px;
 }
 
-.report-header {
+.report-header-left {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;  /* label di atas, nominal di bawah */
+  gap: 2px;
 }
 
-.report-header .right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  white-space: nowrap; /* 🔥 tambah ini */
-  flex-shrink: 0;
+.report-header-left b {
+  font-size: 16px;
 }
 
 .popup-box {
@@ -322,13 +324,6 @@ body.sheet-open .fab {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.report-header {
-  background: #1e293b;
-  padding: 12px;
-  border-radius: 12px;
-  margin-top: 10px;
 }
 
 .report-item {
