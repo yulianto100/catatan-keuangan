@@ -217,6 +217,11 @@ body.sheet-open .fab {
               inset 0 -10px 10px -10px rgba(0,0,0,0.3);
 }
 
+.report-header > div:last-child {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .report {
   margin-top: 20px;
   margin-bottom: 80px;
@@ -246,6 +251,8 @@ body.sheet-open .fab {
   align-items: center;
   gap: 6px;
   font-size: 14px;
+  white-space: nowrap; /* 🔥 tambah ini */
+  flex-shrink: 0;
 }
 
 .popup-box {
