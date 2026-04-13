@@ -123,7 +123,12 @@ body {
 }
 
 .section {
-  margin-top: 16px;
+  margin-top: 12px; /* lebih rapih antar section */
+  background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.1));
+border: 1px solid rgba(255,255,255,0.1);
+backdrop-filter: blur(12px);
+  border-radius: 18px;
+  padding: 14px;
 }
 
 
@@ -217,7 +222,7 @@ body.sheet-open .fab {
 
 .report {
   margin-top: 20px;
-  margin-bottom: 80px;
+  margin-bottom: 8px;
   padding-bottom: 10px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   position: relative;
