@@ -218,8 +218,9 @@ body.sheet-open .fab {
 }
 
 .report-header > div:last-child {
-  white-space: nowrap;
-  flex-shrink: 0;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  min-width: fit-content !important;
 }
 
 .report {
