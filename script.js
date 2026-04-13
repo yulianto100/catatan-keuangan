@@ -140,9 +140,13 @@ function editDataById(id) {
 // ============================
 // DELETE
 // ============================
+// ✅ FIX
 function openDelete(key) {
   deleteIndex = key;
-  document.getElementById("popup").style.display = "flex";
+  let popup = document.getElementById("popup");
+  popup.style.display = "flex";
+  popup.classList.add("active");        // 🔥 INI YANG KURANG
+  popup.style.pointerEvents = "auto";   // 🔥 double safety
 }
 
 function confirmDelete() {
@@ -235,6 +239,8 @@ function editKategori(id, namaLama) {
 function closePopup() {
   let popup = document.getElementById("popup");
   popup.style.display = "none";
+  popup.classList.remove("active");     // 🔥 bersihkan class
+  popup.style.pointerEvents = "none";
 }
 
 // ============================
@@ -596,7 +602,7 @@ function renderLaporan(listData) {
   if (k === "Transfer") continue; // 🔥 WAJIB
     masukHTML += `
       <div class="report-item">
-        <span>${k}</span>
+        <span>🟢 ${k}</span>
         <b>Rp ${kategoriMasuk[k].toLocaleString("id-ID")}</b>
       </div>
     `;
@@ -608,7 +614,7 @@ function renderLaporan(listData) {
   if (k === "Transfer") continue; // 🔥 WAJIB
     keluarHTML += `
       <div class="report-item">
-        <span>${k}</span>
+        <span>🔴 ${k}</span>
         <b>Rp ${kategoriKeluar[k].toLocaleString("id-ID")}</b>
       </div>
     `;
