@@ -8,7 +8,10 @@ body {
 
 .app {
   padding: 16px;
-  max-width: 100%;
+  padding-left: calc(16px + env(safe-area-inset-left));
+  padding-right: calc(16px + env(safe-area-inset-right));
+  max-width: 480px;
+  margin: auto;
   overflow-x: hidden;
 }
 
@@ -213,7 +216,7 @@ body.sheet-open .fab {
 
 .report {
   margin-top: 20px;
-  margin-bottom: 24px; /* 🔥 ini penting */
+  margin-bottom: 80px;
   padding-bottom: 10px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   position: relative;
