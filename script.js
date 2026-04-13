@@ -3,6 +3,7 @@ let deleteIndex = null;
 let selectedKategori = [];
 let editIndex = null;
 let currentFilteredData = [];
+let kategoriList = [];
 
 let currentPage = 1;
 let itemsPerPage = 7;
@@ -36,6 +37,7 @@ window.onload = () => {
 
   initSheetDrag();
   toggleTransfer();
+  loadKategori();
 };
 
 // ============================
@@ -146,6 +148,77 @@ function openDelete(key) {
 function confirmDelete() {
   db.ref("keuangan/" + deleteIndex).remove();
   closePopup();
+}
+
+function renderKategoriDropdown() {
+  let el = document.getElementById("kategori");
+  el.innerHTML = "";
+
+  kategoriList.forEach(k => {
+    el.innerHTML += `<option value="${k.nama}">${k.nama}</option>`;
+  });
+}
+
+function openKategoriManager() {
+  document.getElementById("popupKategori").style.display = "flex";
+  renderKategoriList();
+}
+
+function closeKategori() {
+  document.getElementById("popupKategori").style.display = "none";
+}
+
+function tambahKategori() {
+  let nama = document.getElementById("newKategori").value;
+
+  if (!nama) return alert("Isi nama kategori!");
+
+  let id = generateId();
+
+  db.ref("kategori/" + id).set(nama);
+
+  document.getElementById("newKategori").value = "";
+  closeModalKategori(); // 🔥 auto close
+}
+
+function renderKategoriList() {
+  let el = document.getElementById("listKategori");
+  el.innerHTML = "";
+
+  kategoriList.forEach(k => {
+    el.innerHTML += `
+      <div class="item">
+        <span>${k.nama}</span>
+
+        <div>
+          <button onclick="editKategori('${k.id}', '${k.nama}')">Edit</button>
+          <button onclick="hapusKategori('${k.id}')">Hapus</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function hapusKategori(id) {
+  const confirmHapus = confirm("Yakin mau hapus kategori ini?");
+
+  if (!confirmHapus) return;
+
+  db.ref("kategori/" + id).remove();
+
+  closeModalKategori(); // 🔥 auto close
+}
+
+function closeModalKategori() {
+  document.getElementById("popupKategori").style.display = "none";
+}
+
+function editKategori(id, namaLama) {
+  let baru = prompt("Edit kategori:", namaLama);
+  if (!baru) return;
+
+  db.ref("kategori/" + id).set(baru);
+  closeModalKategori();
 }
 
 function closePopup() {
@@ -348,17 +421,34 @@ function generateKategoriFilter() {
   let container = document.getElementById("filterKategori");
   container.innerHTML = "";
 
-  let kategoriList = [...new Set(data.map(d => d.kategori))];
+  // 🔥 HITUNG JUMLAH PER KATEGORI
+  let countMap = {};
 
+  data.forEach(item => {
+    // skip transfer
+    if (isTransfer(item)) return;
+
+    if (!countMap[item.kategori]) {
+      countMap[item.kategori] = 0;
+    }
+
+    countMap[item.kategori]++;
+  });
+
+  // 🔥 RENDER DARI kategoriList (biar konsisten sama Firebase)
   kategoriList.forEach(k => {
+    let jumlah = countMap[k.nama] || 0;
+
+  if (jumlah === 0) return; // 🔥 optional
+
     container.innerHTML += `
       <label class="kategori-item">
         <input 
           type="checkbox" 
-          value="${k}" 
+          value="${k.nama}" 
           onchange="updateKategori(this)"
         >
-        <span>${k}</span>
+        <span>${k.nama} (${jumlah})</span>
       </label>
     `;
   });
@@ -370,15 +460,58 @@ function updateKategori(el) {
 }
 
 function applyFilter() {
-  let filtered = listData.filter(item => !isTransfer(item));
-  currentPage = 1; // 🔥 WAJIB
+  let from = document.getElementById("fromMonth").value;
+  let to = document.getElementById("toMonth").value;
+
+  let filtered = data.filter(item => {
+    // ❌ skip transfer
+    if (isTransfer(item)) return false;
+
+    // ✅ FILTER KATEGORI
+    if (selectedKategori.length > 0 && !selectedKategori.includes(item.kategori)) {
+      return false;
+    }
+
+    // ✅ FILTER TANGGAL (BULAN)
+    let itemMonth = item.tanggal?.slice(0, 7); // format YYYY-MM
+
+    if (from && itemMonth < from) return false;
+    if (to && itemMonth > to) return false;
+
+    return true;
+  });
+
+  currentPage = 1;
   render(filtered);
+  closeFilter(); // auto close 🔥
 }
 
 function resetFilter() {
   selectedKategori = [];
   currentPage = 1;
   render(data);
+
+  closeFilter(); // 🔥 auto close
+}
+
+function closeFilter() {
+  document.getElementById("filterPanel").style.display = "none";
+}
+
+function selectAllKategori() {
+  selectedKategori = kategoriList.map(k => k.nama);
+
+  document.querySelectorAll('#filterKategori input').forEach(el => {
+    el.checked = true;
+  });
+}
+
+function clearAllKategori() {
+  selectedKategori = [];
+
+  document.querySelectorAll('#filterKategori input').forEach(el => {
+    el.checked = false;
+  });
 }
 
 function exportExcel() {
@@ -389,16 +522,6 @@ function exportExcel() {
   XLSX.utils.book_append_sheet(wb, ws, "Data");
 
   XLSX.writeFile(wb, "keuangan.xlsx");
-}
-
-function selectAllKategori() {
-  selectedKategori = [...new Set(data.map(d => d.kategori))];
-  render(data);
-}
-
-function clearAllKategori() {
-  selectedKategori = [];
-  render(data);
 }
 
 // ============================
@@ -499,6 +622,24 @@ function isTransfer(item) {
   );
 }
 
+function loadKategori() {
+  db.ref("kategori").on("value", snapshot => {
+    let val = snapshot.val() || {};
+
+    kategoriList = Object.entries(val).map(([key, value]) => ({
+      id: key,
+      nama: value
+    }));
+
+    renderKategoriDropdown();
+
+if (kategoriList.length > 0) {
+  document.getElementById("kategori").value = kategoriList[0].nama;
+}
+    generateKategoriFilter(); // 🔥 TAMBAH INI
+  });
+}
+
 function prevPage() {
   if (currentPage > 1) {
     currentPage--;
@@ -509,7 +650,9 @@ function prevPage() {
 function resetForm() {
   document.getElementById("nama").value = "";
   document.getElementById("nominal").value = "";
-  document.getElementById("kategori").value = "Bills";
+  if (kategoriList.length > 0) {
+  document.getElementById("kategori").value = kategoriList[0].nama;
+}
   document.getElementById("tipe").value = "masuk";
   document.getElementById("wallet").value = "Cash";
   document.getElementById("isTransfer").value = "no";
