@@ -205,19 +205,10 @@ body.sheet-open .fab {
 }
 
 
-/* div kiri: "⬆️ Pemasukan" */
-.report-header > div:first-child {
-  flex: 1;
-  min-width: 0;         /* 🔥 INI KUNCI */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* div kanan: nominal + arrow */
 .report-header > div:last-child {
-  flex-shrink: 0;       /* 🔥 jangan menyusut */
-  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .report {
@@ -271,17 +262,23 @@ body.sheet-open .fab {
   border-left: 3px solid #ef4444;
 }
 
+/* Biar label "PEMASUKAN" / "Pengeluaran" tetap ellipsis kalau kepanjangan */
 .report-header-left span {
   font-size: 12px;
   opacity: 0.6;
   text-transform: uppercase;
   letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* Pastikan nominal tidak terpotong */
 .report-header-left b {
   font-size: 18px;
   font-weight: 700;
-}
+  white-space: nowrap;
+} 
 
 .report-header.masuk .report-header-left b {
   color: #22c55e;
