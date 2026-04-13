@@ -389,7 +389,7 @@ body.sheet-open .fab {
   font-weight: 600;
 }
 
-.text-masuk { color: #22c55e; }
+.text-masuk { color: #14532d; /* ijo gelap */ }
 .text-keluar { color: #ef4444; }
 
 /* BUTTON */
@@ -703,7 +703,7 @@ body::before {
   font-size: 11px;
 }
 
-.pl-positif { color: #22c55e; }
+.pl-positif { color: #166534; /* lebih soft & dalam */ }
 .pl-negatif { color: #ef4444; }
 
 .aset-actions {
