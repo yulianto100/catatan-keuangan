@@ -178,10 +178,11 @@ body.sheet-open .fab {
 
 .popup.active {
   display: flex;
-  pointer-events: all;
+  pointer-events: auto;
 }
 
 .popup {
+  pointer-events: none;
   display: none;
   position: fixed;
   inset: 0;
