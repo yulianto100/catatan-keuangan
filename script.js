@@ -1,274 +1,845 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <title>Keuangan</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+let data = [];
+let deleteIndex = null;
+let selectedKategori = [];
+let editIndex = null;
+let currentFilteredData = [];
+let kategoriList = [];
+let editAsetId = null;
 
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#22c55e">
+let currentPage = 1;
+let itemsPerPage = 7;
 
-  <link rel="stylesheet" href="style.css">
-</head>
+// ============================
+// LOAD DATA
+// ============================
+function loadData() {
+  db.ref("keuangan").on("value", snapshot => {
+    let val = snapshot.val() || {};
 
-<body>
+    data = Object.keys(val).map(key => ({
+      ...val[key],
+      firebaseKey: key
+    }));
 
-<div class="app">
+    // 🔥 SORT TERBARU DI ATAS (PALING PENTING)
+    data.sort((a, b) => b.id - a.id);
 
-  <h2 class="title">💰 Keuangan</h2>
-
-  <!-- SALDO -->
-  <div class="saldo-card">
-    <div class="saldo-top">Saldo</div>
-    <div class="saldo-main" id="saldo">Rp 0</div>
-
-    <div class="saldo-detail">
-      <div>⬆️ <span id="totalMasuk">Rp 0</span></div>
-      <div>⬇️ <span id="totalKeluar">Rp 0</span></div>
-    </div>
-  </div>
-
-  <!-- WALLET -->
-  <div class="wallet-saldo">
-    <div>💵 Cash: <span id="saldoCash">Rp 0</span></div>
-    <div>🏦 Bank: <span id="saldoBank">Rp 0</span></div>
-    <div>📱 E-Wallet: <span id="saldoEwallet">Rp 0</span></div>
-  </div>
-<div class="section">
-  <!-- LAPORAN -->
-  <div class="report">
-    <div class="report-head">
-      <h3>📊 Laporan</h3>
-      <button onclick="toggleFilter()" class="filter-btn">⚙️</button>
-      <button onclick="openKategoriManager()" class="filter-btn">🗂️</button>
-    </div>
-
-    <div id="filterPanel" class="filter-panel">
-      <label>Dari Bulan</label>
-      <input type="month" id="fromMonth">
-
-      <label>Sampai Bulan</label>
-      <input type="month" id="toMonth">
-
-      <label>Kategori</label>
-
-      <div class="filter-actions">
-        <button onclick="selectAllKategori()">All</button>
-        <button onclick="clearAllKategori()">Clear</button>
-      </div>
-
-      <div id="filterKategori" class="kategori-container"></div>
-
-      <button onclick="applyFilter()">Terapkan</button>
-      <button class="btn-close" onclick="resetFilter()">Reset</button>
-    </div>
-
-<div class="report-header" onclick="toggleMasuk()">
-  <div class="report-header-left">
-    <span>⬆️ Pemasukan</span>
-    <b id="totalMasukReport" class="text-masuk">Rp 0</b>
-  </div>
-  <span id="arrowMasuk">▼</span>
-</div>
-
-<div id="laporanMasuk" style="display:none"></div>
-
-<div class="report-header" onclick="toggleKeluar()">
-  <div class="report-header-left">
-    <div>⬇️ Pengeluaran</div>
-    <b id="totalKeluarReport" class="text-keluar">Rp 0</b>
-  </div>
-  <span id="arrowKeluar">▼</span>
-</div>
-<div id="laporanKeluar" style="display:none"></div>
-  </div>
-</div>
-
-<!-- ASET / INVESTASI -->
-<div class="section">
-  <div class="aset-head">
-    <h3>📈 Portofolio Aset</h3>
-    <button onclick="openAsetForm()" class="filter-btn">＋</button>
-  </div>
-
-  <!-- Summary Card -->
-  <div class="aset-summary">
-    <div class="aset-summary-item">
-      <span>Total Modal</span>
-      <b id="totalModal">Rp 0</b>
-    </div>
-    <div class="aset-summary-item">
-      <span>Nilai Sekarang</span>
-      <b id="totalNilai">Rp 0</b>
-    </div>
-    <div class="aset-summary-item">
-      <span>Profit / Loss</span>
-      <b id="totalPL">Rp 0</b>
-    </div>
-  </div>
-
-  <div id="listAset"></div>
-</div>
-
-<!-- POPUP TAMBAH ASET -->
-<div class="popup" id="popupAset">
-  <div class="popup-box">
-    <h3 id="asetFormTitle">Tambah Aset</h3>
-
-    <input type="text" id="asetNama" placeholder="Nama aset (e.g. BRI, Bitcoin)">
-
-    <select id="asetJenis">
-      <option>Saham</option>
-      <option>Reksa Dana</option>
-      <option>Emas</option>
-      <option>Deposito</option>
-    </select>
-
-    <input type="number" id="asetModal" placeholder="Modal (Rp)">
-    <input type="number" id="asetNilai" placeholder="Nilai sekarang (Rp)">
-    <input type="date" id="asetTanggal">
-    <input type="text" id="asetCatatan" placeholder="Catatan (opsional)">
-
-    <button onclick="simpanAset()">Simpan</button>
-    <button class="btn-close" onclick="closeAsetForm()">Batal</button>
-  </div>
-</div>
-  <!-- EXPORT -->
-  <button onclick="exportExcel()">📁 Export Excel</button>
-
-  <!-- LIST -->
-  <div id="list" class="list"></div>
-
-  <!-- FAB -->
-  <button class="fab" onclick="openTypePopup()">＋</button>
-
-  <!-- SHEET -->
-  <div class="sheet" id="sheet">
-    <div class="sheet-box">
-
-      <div class="drag-bar" id="dragBar"></div>
-
-      <div class="sheet-header">
-        <h3 id="formTitle">Tambah Transaksi</h3>
-      </div>
-
-      <div class="sheet-content">
-
-        <input type="date" id="tanggal">
-        <input type="text" id="nama" placeholder="Keterangan" onblur="this.value = capitalizeWords(this.value)">
-        <input type="number" id="nominal" placeholder="Nominal">
-
-        <select id="isTransfer" onchange="toggleTransfer()">
-          <option value="no">Transaksi Biasa</option>
-          <option value="yes">Transfer Antar Wallet</option>
-        </select>
-
-        <!-- 🔥 NORMAL FIELD -->
-        <div id="normalField">
-          <select id="wallet">
-            <option>Cash</option>
-            <option>Bank</option>
-            <option>E-Wallet</option>
-          </select>
-          <select id="kategori"></select>
-          <select id="tipe">
-            <option value="masuk">Pemasukan</option>
-            <option value="keluar">Pengeluaran</option>
-          </select>
-        </div>
-
-        <!-- 🔥 TRANSFER -->
-        <div id="transferBox" style="display:none">
-          <label>Dari Wallet</label>
-          <select id="fromWallet">
-            <option>Cash</option>
-            <option>Bank</option>
-            <option>E-Wallet</option>
-          </select>
-
-          <label>Ke Wallet</label>
-          <select id="toWallet">
-            <option>Cash</option>
-            <option>Bank</option>
-            <option>E-Wallet</option>
-          </select>
-        </div>
-
-        <button onclick="tambahData()">Simpan</button>
-        <button class="btn-close" onclick="closeSheet()">Tutup</button>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- POPUP TYPE -->
-  <div class="popup" id="popupType">
-    <div class="popup-box">
-
-      <h3>Pilih Jenis Transaksi</h3>
-
-      <button onclick="openForm('normal')" class="btn-primary">
-        💸 Transaksi Biasa
-      </button>
-
-      <button onclick="openForm('transfer')" class="btn-secondary">
-        🔁 Transfer Antar Wallet
-      </button>
-
-      <button class="btn-close" onclick="closeTypePopup()">
-        Batal
-      </button>
-
-    </div>
-  </div>
-
-  <!-- POPUP DELETE -->
-  <div class="popup" id="popup">
-    <div class="popup-box">
-      <p>Hapus transaksi ini?</p>
-      <button onclick="confirmDelete()">Hapus</button>
-      <button class="btn-close" onclick="closePopup()">Batal</button>
-    </div>
-  </div>
-
-  <div class="popup" id="popupKategori">
-  <div class="popup-box">
-    <h3>Kelola Kategori</h3>
-
-    <input type="text" id="newKategori" placeholder="Nama kategori">
-
-    <button onclick="tambahKategori()">Tambah</button>
-
-    <div id="listKategori"></div>
-
-    <button class="btn-close" onclick="closeKategori()">Tutup</button>
-  </div>
-</div>
-
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "catatan-keuangan-37194.firebaseapp.com",
-  databaseURL: "https://catatan-keuangan-37194-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "catatan-keuangan-37194",
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script src="script.js"></script>
-
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js');
+    currentPage = 1;
+    render();
+    generateKategoriFilter();
+  });
 }
-</script>
 
-</body>
-</html>
+window.onload = () => {
+  loadData();
+  loadAset();
+
+  let tgl = document.getElementById("tanggal");
+  if (tgl) tgl.valueAsDate = new Date();
+
+  initSheetDrag();
+  toggleTransfer();
+  loadKategori();
+};
+
+// ============================
+// TAMBAH / EDIT / TRANSFER
+// ============================
+function generateId() {
+  return Date.now().toString() + Math.floor(Math.random() * 1000);
+}
+
+function tambahData() {
+  let tanggal = document.getElementById("tanggal").value;
+  let namaInput = document.getElementById("nama").value;
+  let nama = capitalizeWords(namaInput);
+  let nominal = parseInt(document.getElementById("nominal").value);
+  let kategori = document.getElementById("kategori").value;
+  let tipe = document.getElementById("tipe").value;
+  let wallet = document.getElementById("wallet").value;
+  let modeTransfer = document.getElementById("isTransfer").value; // ← GANTI NAMA
+
+  if (!nominal) return alert("Isi nominal!");
+
+  // ================= EDIT =================
+  if (editIndex) {
+    db.ref("keuangan/" + editIndex).update({
+      tanggal, nama, nominal, kategori, tipe, wallet
+    });
+    editIndex = null;
+    closeSheet();
+    resetForm();
+    return;
+  }
+
+  // ================= TRANSFER =================
+  if (modeTransfer === "yes") { // ← PAKAI modeTransfer
+    let from = document.getElementById("fromWallet").value;
+    let to = document.getElementById("toWallet").value;
+
+    if (from === to) return alert("Wallet tidak boleh sama!");
+
+    let id1 = generateId();
+    let id2 = generateId();
+
+    db.ref("keuangan/" + id1).set({
+      id: id1, tanggal,
+      nama: "Transfer ke " + to,
+      nominal,
+      type: "transfer",
+      kategori: "Transfer",
+      tipe: "keluar",
+      wallet: from
+    });
+
+    db.ref("keuangan/" + id2).set({
+      id: id2, tanggal,
+      nama: "Transfer dari " + from,
+      nominal,
+      type: "transfer",
+      kategori: "Transfer",
+      tipe: "masuk",
+      wallet: to
+    });
+
+  } else {
+    let id = generateId();
+    db.ref("keuangan/" + id).set({
+      id, tanggal, nama, nominal, kategori, tipe, wallet
+    });
+  }
+
+  closeSheet();
+}
+
+// ============================
+// EDIT
+// ============================
+function editDataById(id) {
+  let item = data.find(d => d.firebaseKey == id);
+  if (!item) return;
+
+  openSheet(true);
+
+  document.getElementById("nama").value = item.nama;
+  document.getElementById("nominal").value = item.nominal;
+  document.getElementById("kategori").value = item.kategori;
+  document.getElementById("tipe").value = item.tipe;
+  document.getElementById("wallet").value = item.wallet;
+  document.getElementById("tanggal").value = item.tanggal;
+
+  if (item.kategori === "Transfer") {
+    document.getElementById("isTransfer").value = "yes";
+  } else {
+    document.getElementById("isTransfer").value = "no";
+  }
+
+  toggleTransfer();
+
+  editIndex = id;
+  document.getElementById("formTitle").innerText = "Edit Transaksi";
+}
+
+// ============================
+// DELETE
+// ============================
+// ✅ FIX
+function openDelete(key) {
+  deleteIndex = key;
+  let popup = document.getElementById("popup");
+  popup.style.display = "flex";
+  popup.classList.add("active");        // 🔥 INI YANG KURANG
+  popup.style.pointerEvents = "auto";   // 🔥 double safety
+}
+
+function confirmDelete() {
+  db.ref("keuangan/" + deleteIndex).remove();
+  closePopup();
+}
+
+function renderKategoriDropdown() {
+  let el = document.getElementById("kategori");
+  el.innerHTML = "";
+
+  kategoriList.forEach(k => {
+    el.innerHTML += `<option value="${k.nama}">${k.nama}</option>`;
+  });
+}
+
+function openKategoriManager() {
+  let el = document.getElementById("popupKategori");
+
+  el.classList.add("active");
+  el.style.display = "flex";
+  el.style.pointerEvents = "auto";
+}
+
+function closeKategori() {
+  let el = document.getElementById("popupKategori");
+
+  el.classList.remove("active");
+  el.style.display = "none";
+  el.style.pointerEvents = "none"; // 🔥 INI KUNCI
+}
+
+function capitalizeWords(text) {
+  return text
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+
+function tambahKategori() {
+  let nama = document.getElementById("newKategori").value;
+
+  if (!nama) return alert("Isi nama kategori!");
+
+  let id = generateId();
+
+  db.ref("kategori/" + id).set(nama);
+  setTimeout(() => {
+  closeKategori();
+}, 300);
+
+  document.getElementById("newKategori").value = "";
+  closeModalKategori(); // 🔥 auto close
+}
+
+function renderKategoriList() {
+  let el = document.getElementById("listKategori");
+  el.innerHTML = "";
+
+  kategoriList.forEach(k => {
+    el.innerHTML += `
+      <div class="item">
+        <span>${k.nama}</span>
+
+        <div>
+          <button onclick="editKategori('${k.id}', '${k.nama}')">Edit</button>
+          <button onclick="hapusKategori('${k.id}')">Hapus</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function hapusKategori(id) {
+  const confirmHapus = confirm("Yakin mau hapus kategori ini?");
+
+  if (!confirmHapus) return;
+
+  db.ref("kategori/" + id).remove();
+
+  closeModalKategori(); // 🔥 auto close
+}
+
+function closeModalKategori() {
+  closeKategori(); // 🔥 pake ini aja
+}
+
+function editKategori(id, namaLama) {
+  let baru = prompt("Edit kategori:", namaLama);
+  if (!baru) return;
+
+  db.ref("kategori/" + id).set(baru);
+  closeModalKategori();
+}
+
+function closePopup() {
+  let popup = document.getElementById("popup");
+  popup.style.display = "none";
+  popup.classList.remove("active");     // 🔥 bersihkan class
+  popup.style.pointerEvents = "none";
+}
+
+// Load & Render
+function loadAset() {
+  db.ref("investasi").on("value", snapshot => {
+    let val = snapshot.val() || {};
+    let asetData = Object.keys(val).map(key => ({ ...val[key], firebaseKey: key }));
+    renderAset(asetData);
+  });
+}
+
+function renderAset(asetData) {
+  let totalModal = 0, totalNilai = 0;
+  let listEl = document.getElementById("listAset");
+  listEl.innerHTML = "";
+
+  // Icon per jenis
+  const icon = {
+    "Saham": "📈", "Reksa Dana": "💼", "Emas": "🥇",
+    "Crypto": "🪙", "Properti": "🏠", "Deposito": "🏦", "Lainnya": "📦"
+  };
+
+  asetData.forEach(aset => {
+    totalModal += aset.modal || 0;
+    totalNilai += aset.nilai || 0;
+
+    let pl = (aset.nilai || 0) - (aset.modal || 0);
+    let plPersen = aset.modal ? ((pl / aset.modal) * 100).toFixed(1) : 0;
+    let plClass = pl >= 0 ? "pl-positif" : "pl-negatif";
+    let plSign = pl >= 0 ? "+" : "";
+
+    listEl.innerHTML += `
+      <div class="aset-card" onclick="editAset('${aset.firebaseKey}')">
+        <div class="aset-card-top">
+          <div class="aset-card-left">
+            <strong>${icon[aset.jenis] || "📦"} ${aset.nama}</strong><br>
+            <span class="aset-badge">${aset.jenis}</span>
+          </div>
+          <div class="${plClass}" style="text-align:right">
+            <div style="font-size:13px">${plSign}Rp ${pl.toLocaleString("id-ID")}</div>
+            <div style="font-size:11px;opacity:0.7">${plSign}${plPersen}%</div>
+          </div>
+        </div>
+
+        <div class="aset-card-bottom">
+          <div class="aset-row">
+            <span>Modal</span>
+            <b>Rp ${aset.modal.toLocaleString("id-ID")}</b>
+          </div>
+          <div class="aset-row" style="text-align:right">
+            <span>Nilai Kini</span>
+            <b>Rp ${aset.nilai.toLocaleString("id-ID")}</b>
+          </div>
+        </div>
+
+        <div class="aset-actions">
+          <button onclick="event.stopPropagation(); editAset('${aset.firebaseKey}')">✏️ Edit</button>
+          <button class="btn-close" onclick="event.stopPropagation(); hapusAset('${aset.firebaseKey}')">🗑️ Hapus</button>
+        </div>
+      </div>
+    `;
+  });
+
+  // Update summary
+  let pl = totalNilai - totalModal;
+  let plClass = pl >= 0 ? "pl-positif" : "pl-negatif";
+
+  document.getElementById("totalModal").innerText = "Rp " + totalModal.toLocaleString("id-ID");
+  document.getElementById("totalNilai").innerText = "Rp " + totalNilai.toLocaleString("id-ID");
+  document.getElementById("totalPL").innerHTML =
+    `<span class="${plClass}">${pl >= 0 ? "+" : ""}Rp ${pl.toLocaleString("id-ID")}</span>`;
+}
+
+// Form
+function openAsetForm() {
+  editAsetId = null;
+  document.getElementById("asetFormTitle").innerText = "Tambah Aset";
+  document.getElementById("asetNama").value = "";
+  document.getElementById("asetModal").value = "";
+  document.getElementById("asetNilai").value = "";
+  document.getElementById("asetCatatan").value = "";
+  document.getElementById("asetTanggal").valueAsDate = new Date();
+
+  let popup = document.getElementById("popupAset");
+  popup.style.display = "flex";
+  popup.classList.add("active");
+  popup.style.pointerEvents = "auto";
+}
+
+function closeAsetForm() {
+  let popup = document.getElementById("popupAset");
+  popup.style.display = "none";
+  popup.classList.remove("active");
+  popup.style.pointerEvents = "none";
+}
+
+function simpanAset() {
+  let nama = document.getElementById("asetNama").value;
+  let jenis = document.getElementById("asetJenis").value;
+  let modal = parseInt(document.getElementById("asetModal").value);
+  let nilai = parseInt(document.getElementById("asetNilai").value);
+  let tanggal = document.getElementById("asetTanggal").value;
+  let catatan = document.getElementById("asetCatatan").value;
+
+  if (!nama || !modal || !nilai) return alert("Isi nama, modal, dan nilai!");
+
+  let payload = { nama, jenis, modal, nilai, tanggal, catatan };
+
+  if (editAsetId) {
+    db.ref("investasi/" + editAsetId).update(payload);
+  } else {
+    let id = generateId();
+    db.ref("investasi/" + id).set({ id, ...payload });
+  }
+
+  closeAsetForm();
+}
+
+function editAset(key) {
+  db.ref("investasi/" + key).once("value", snap => {
+    let a = snap.val();
+    editAsetId = key;
+    document.getElementById("asetFormTitle").innerText = "Edit Aset";
+    document.getElementById("asetNama").value = a.nama;
+    document.getElementById("asetJenis").value = a.jenis;
+    document.getElementById("asetModal").value = a.modal;
+    document.getElementById("asetNilai").value = a.nilai;
+    document.getElementById("asetTanggal").value = a.tanggal;
+    document.getElementById("asetCatatan").value = a.catatan || "";
+    openAsetForm();
+  });
+}
+
+function hapusAset(key) {
+  if (confirm("Hapus aset ini?")) {
+    db.ref("investasi/" + key).remove();
+  }
+}
+
+// ============================
+// RENDER
+// ============================
+function render(listData = data) {
+
+  // 🚨 FILTER GLOBAL (INI KUNCI)
+  currentFilteredData = listData;
+
+  let list = document.getElementById("list");
+  list.innerHTML = "";
+
+  let saldo = 0, masuk = 0, keluar = 0;
+  let cash = 0, bank = 0, ewallet = 0;
+
+listData.forEach(item => {
+  let isMasuk = item.tipe === "masuk";
+  
+  // Hanya hitung masuk/keluar kalau BUKAN transfer
+  if (item.type !== "transfer" && item.kategori !== "Transfer") {
+    masuk += isMasuk ? item.nominal : 0;
+    keluar += !isMasuk ? item.nominal : 0;
+  }
+
+  // Saldo & wallet tetap dihitung semua (termasuk transfer)
+  saldo += isMasuk ? item.nominal : -item.nominal;
+  let val = isMasuk ? item.nominal : -item.nominal;
+  if (item.wallet === "Cash") cash += val;
+  if (item.wallet === "Bank") bank += val;
+  if (item.wallet === "E-Wallet") ewallet += val;
+});
+
+  let start = (currentPage - 1) * itemsPerPage;
+  let paginatedData = listData.slice(start, start + itemsPerPage);
+
+  paginatedData.forEach(item => {
+    let warna = item.tipe === "masuk" ? "#22c55e" : "#ef4444";
+
+    list.innerHTML += `
+      <div class="item" onclick="editDataById('${item.firebaseKey}')">
+        <div>
+          <b>${item.nama}</b><br>
+          <small>${item.kategori} • ${item.tanggal}</small>
+        </div>
+
+        <div style="text-align:right">
+          <div style="color:${warna}">
+            Rp ${item.nominal.toLocaleString("id-ID")}
+          </div>
+          <button onclick="event.stopPropagation(); openDelete('${item.firebaseKey}')">
+            Hapus
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById("saldo").innerText = "Rp " + saldo.toLocaleString("id-ID");
+  document.getElementById("totalMasuk").innerText = "Rp " + masuk.toLocaleString("id-ID");
+  document.getElementById("totalKeluar").innerText = "Rp " + keluar.toLocaleString("id-ID");
+
+  document.getElementById("saldoCash").innerText = "Rp " + cash.toLocaleString("id-ID");
+  document.getElementById("saldoBank").innerText = "Rp " + bank.toLocaleString("id-ID");
+  document.getElementById("saldoEwallet").innerText = "Rp " + ewallet.toLocaleString("id-ID");
+
+let cleanData = listData.filter(item => !isTransfer(item));
+
+// DEBUG — hapus setelah beres
+console.log("RAW DATA:", listData.map(i => ({ 
+  nama: i.nama, 
+  kategori: i.kategori, 
+  type: i.type 
+})));
+console.log("CLEAN DATA:", cleanData.map(i => ({ 
+  nama: i.nama, 
+  kategori: i.kategori 
+})));
+
+renderLaporan(cleanData);
+  let totalPages = Math.ceil(listData.length / itemsPerPage);
+
+list.innerHTML += `
+  <div style="display:flex;justify-content:center;gap:10px;margin-top:12px;">
+    <button onclick="prevPage()" ${currentPage === 1 ? "disabled" : ""}>Prev</button>
+    <span>Page ${currentPage} / ${totalPages || 1}</span>
+    <button onclick="nextPage(${listData.length})" ${currentPage === totalPages ? "disabled" : ""}>Next</button>
+  </div>
+`;
+}
+
+// ============================
+// UI
+// ============================
+function openTypePopup() {
+  let el = document.getElementById("popupType");
+
+  el.style.display = "flex";
+  el.classList.add("active");
+
+  el.style.pointerEvents = "auto"; // 🔥 WAJIB
+}
+
+function closeTypePopup() {
+  let el = document.getElementById("popupType");
+
+  el.style.display = "none";
+  el.classList.remove("active");
+
+  // 🔥 TAMBAHAN WAJIB
+  el.style.pointerEvents = "none";
+}
+
+function openForm(type) {
+  closeTypePopup();
+  openSheet();
+
+  document.getElementById("isTransfer").value =
+    type === "transfer" ? "yes" : "no";
+
+  toggleTransfer();
+}
+
+function openSheet(isEdit = false) {
+  closeTypePopup();
+
+  let sheet = document.getElementById("sheet");
+
+  sheet.classList.add("active");
+
+  sheet.style.pointerEvents = "auto";
+  sheet.style.transform = "translateY(0)"; // 🔥 INI KUNCI
+
+  if (!isEdit) {
+    editIndex = null;
+    document.getElementById("formTitle").innerText = "Tambah Transaksi";
+    resetForm(); // 🔥 BIAR SELALU FRESH
+  }
+}
+
+function closeSheet() {
+  let sheet = document.getElementById("sheet");
+
+  sheet.classList.remove("active");
+  sheet.style.transform = "translateY(100%)"; // 🔥 konsisten
+  sheet.style.pointerEvents = "none";
+}
+
+function toggleMasuk() {
+  let el = document.getElementById("laporanMasuk");
+  let arrow = document.getElementById("arrowMasuk");
+
+  let isOpen = el.style.display === "block";
+
+  el.style.display = isOpen ? "none" : "block";
+  arrow.innerText = isOpen ? "▼" : "▲";
+}
+
+function toggleKeluar() {
+  let el = document.getElementById("laporanKeluar");
+  let arrow = document.getElementById("arrowKeluar");
+
+  let isOpen = el.style.display === "block";
+
+  el.style.display = isOpen ? "none" : "block";
+  arrow.innerText = isOpen ? "▼" : "▲";
+}
+
+
+
+function toggleTransfer() {
+  let val = document.getElementById("isTransfer").value;
+
+  let transferBox = document.getElementById("transferBox");
+  let normalField = document.getElementById("normalField");
+
+  if (val === "yes") {
+    transferBox.style.display = "block";
+    normalField.style.display = "none";
+  } else {
+    transferBox.style.display = "none";
+    normalField.style.display = "block";
+  }
+}
+
+// ============================
+// FILTER & EXPORT (UNCHANGED)
+// ============================
+function toggleFilter() {
+  let panel = document.getElementById("filterPanel");
+  panel.style.display = panel.style.display === "block" ? "none" : "block";
+}
+
+function generateKategoriFilter() {
+  let container = document.getElementById("filterKategori");
+  container.innerHTML = "";
+
+  // 🔥 HITUNG JUMLAH PER KATEGORI
+  let countMap = {};
+
+  data.forEach(item => {
+    // skip transfer
+    if (isTransfer(item)) return;
+
+    if (!countMap[item.kategori]) {
+      countMap[item.kategori] = 0;
+    }
+
+    countMap[item.kategori]++;
+  });
+
+  // 🔥 RENDER DARI kategoriList (biar konsisten sama Firebase)
+  kategoriList.forEach(k => {
+    let jumlah = countMap[k.nama] || 0;
+
+  if (jumlah === 0) return; // 🔥 optional
+
+    container.innerHTML += `
+      <label class="kategori-item">
+        <input 
+          type="checkbox" 
+          value="${k.nama}" 
+          onchange="updateKategori(this)"
+        >
+        <span>${k.nama} (${jumlah})</span>
+      </label>
+    `;
+  });
+}
+
+function updateKategori(el) {
+  if (el.checked) selectedKategori.push(el.value);
+  else selectedKategori = selectedKategori.filter(k => k !== el.value);
+}
+
+function applyFilter() {
+  let from = document.getElementById("fromMonth").value;
+  let to = document.getElementById("toMonth").value;
+
+  let filtered = data.filter(item => {
+    // ❌ skip transfer
+    if (isTransfer(item)) return false;
+
+    // ✅ FILTER KATEGORI
+    if (selectedKategori.length > 0 && !selectedKategori.includes(item.kategori)) {
+      return false;
+    }
+
+    // ✅ FILTER TANGGAL (BULAN)
+    let itemMonth = item.tanggal?.slice(0, 7); // format YYYY-MM
+
+    if (from && itemMonth < from) return false;
+    if (to && itemMonth > to) return false;
+
+    return true;
+  });
+
+  currentPage = 1;
+  render(filtered);
+  closeFilter(); // auto close 🔥
+}
+
+function resetFilter() {
+  selectedKategori = [];
+  currentPage = 1;
+  render(data);
+
+  closeFilter(); // 🔥 auto close
+}
+
+function closeFilter() {
+  document.getElementById("filterPanel").style.display = "none";
+}
+
+function selectAllKategori() {
+  selectedKategori = kategoriList.map(k => k.nama);
+
+  document.querySelectorAll('#filterKategori input').forEach(el => {
+    el.checked = true;
+  });
+}
+
+function clearAllKategori() {
+  selectedKategori = [];
+
+  document.querySelectorAll('#filterKategori input').forEach(el => {
+    el.checked = false;
+  });
+}
+
+function exportExcel() {
+  if (!currentFilteredData.length) return alert("Tidak ada data");
+
+  let ws = XLSX.utils.json_to_sheet(currentFilteredData);
+  let wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Data");
+
+  XLSX.writeFile(wb, "keuangan.xlsx");
+}
+
+// ============================
+// DRAG
+// ============================
+function initSheetDrag() {
+  let sheet = document.getElementById("sheet");
+  let dragBar = document.getElementById("dragBar");
+
+  if (!dragBar) return;
+
+  let startY = 0;
+
+  dragBar.addEventListener("touchstart", e => {
+    startY = e.touches[0].clientY;
+  });
+
+  dragBar.addEventListener("touchmove", e => {
+    let move = e.touches[0].clientY - startY;
+    if (move > 0) sheet.style.transform = `translateY(${move}px)`;
+  });
+
+  dragBar.addEventListener("touchend", e => {
+    let move = e.changedTouches[0].clientY - startY;
+    if (move > 100) closeSheet();
+    sheet.style.transform = "translateY(0)";
+  });
+}
+
+function renderLaporan(listData) {
+  let masuk = 0;
+  let keluar = 0;
+
+  let kategoriMasuk = {};
+  let kategoriKeluar = {};
+
+  listData.forEach(item => {
+  if (item.type === "transfer" || 
+      (item.kategori && item.kategori.toLowerCase() === "transfer")) return;
+
+    if (item.tipe === "masuk") {
+      masuk += item.nominal;
+      if (!kategoriMasuk[item.kategori]) kategoriMasuk[item.kategori] = 0;
+      kategoriMasuk[item.kategori] += item.nominal;
+    } else {
+      keluar += item.nominal;
+      if (!kategoriKeluar[item.kategori]) kategoriKeluar[item.kategori] = 0;
+      kategoriKeluar[item.kategori] += item.nominal;
+    }
+  });
+
+  document.getElementById("totalMasukReport").innerText =
+    "Rp " + masuk.toLocaleString("id-ID");
+
+  document.getElementById("totalKeluarReport").innerText =
+    "Rp " + keluar.toLocaleString("id-ID");
+
+  let masukHTML = "";
+  for (let k in kategoriMasuk) {
+
+  if (k === "Transfer") continue; // 🔥 WAJIB
+    masukHTML += `
+      <div class="report-item">
+        <span>🟢 ${k}</span>
+        <b>Rp ${kategoriMasuk[k].toLocaleString("id-ID")}</b>
+      </div>
+    `;
+  }
+
+  let keluarHTML = "";
+  for (let k in kategoriKeluar) {
+
+  if (k === "Transfer") continue; // 🔥 WAJIB
+    keluarHTML += `
+      <div class="report-item">
+        <span>🔴 ${k}</span>
+        <b>Rp ${kategoriKeluar[k].toLocaleString("id-ID")}</b>
+      </div>
+    `;
+  }
+
+  document.getElementById("laporanMasuk").innerHTML = masukHTML;
+  document.getElementById("laporanKeluar").innerHTML = keluarHTML;
+}
+
+function nextPage(total) {
+  let totalPages = Math.ceil(total / itemsPerPage);
+  if (currentPage < totalPages) {
+    currentPage++;
+    render(currentFilteredData);
+  }
+}
+
+function isTransfer(item) {
+  return (
+    item.type === "transfer" ||
+    (item.kategori && item.kategori.toLowerCase() === "transfer")
+  );
+}
+
+function loadKategori() {
+  db.ref("kategori").on("value", snapshot => {
+    let val = snapshot.val() || {};
+
+    kategoriList = Object.entries(val).map(([key, value]) => ({
+      id: key,
+      nama: value
+    }));
+
+    renderKategoriDropdown();
+    renderKategoriList(); // 🔥 INI YANG KURANG
+
+if (kategoriList.length > 0) {
+  document.getElementById("kategori").value = kategoriList[0].nama;
+}
+    generateKategoriFilter(); // 🔥 TAMBAH INI
+  });
+}
+
+function prevPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    render(currentFilteredData);
+  }
+}
+
+function resetForm() {
+  document.getElementById("nama").value = "";
+  document.getElementById("nominal").value = "";
+  if (kategoriList.length > 0) {
+  document.getElementById("kategori").value = kategoriList[0].nama;
+}
+  document.getElementById("tipe").value = "masuk";
+  document.getElementById("wallet").value = "Cash";
+  document.getElementById("isTransfer").value = "no";
+
+  // tanggal = hari ini
+  let tgl = document.getElementById("tanggal");
+  if (tgl) tgl.valueAsDate = new Date();
+
+  // reset transfer
+  document.getElementById("fromWallet").value = "Cash";
+  document.getElementById("toWallet").value = "Bank";
+
+  toggleTransfer();
+}
+
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  console.log("PWA siap diinstall 🔥");
+});
