@@ -218,7 +218,7 @@ function hapusKategori(id) {
 }
 
 function closeModalKategori() {
-  document.getElementById("popupKategori").style.display = "none";
+  closeKategori(); // 🔥 pake ini aja
 }
 
 function editKategori(id, namaLama) {
