@@ -155,7 +155,7 @@
       <div class="sheet-content">
 
         <input type="date" id="tanggal">
-        <input type="text" id="nama" placeholder="Keterangan">
+        <input type="text" id="nama" placeholder="Keterangan" onblur="this.value = capitalizeWords(this.value)">
         <input type="number" id="nominal" placeholder="Nominal">
 
         <select id="isTransfer" onchange="toggleTransfer()">
