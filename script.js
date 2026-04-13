@@ -160,12 +160,27 @@ function renderKategoriDropdown() {
 }
 
 function openKategoriManager() {
-  document.getElementById("popupKategori").style.display = "flex";
-  renderKategoriList();
+  let el = document.getElementById("popupKategori");
+
+  el.classList.add("active");
+  el.style.display = "flex";
+  el.style.pointerEvents = "auto";
 }
 
 function closeKategori() {
-  document.getElementById("popupKategori").style.display = "none";
+  let el = document.getElementById("popupKategori");
+
+  el.classList.remove("active");
+  el.style.display = "none";
+  el.style.pointerEvents = "none"; // 🔥 INI KUNCI
+}
+
+function closeAllPopup() {
+  document.querySelectorAll(".popup").forEach(p => {
+    p.classList.remove("active");
+    p.style.display = "none";
+    p.style.pointerEvents = "none";
+  });
 }
 
 function tambahKategori() {
