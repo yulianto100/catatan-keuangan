@@ -83,6 +83,56 @@
 <div id="laporanKeluar" style="display:none"></div>
   </div>
 </div>
+
+<!-- ASET / INVESTASI -->
+<div class="section">
+  <div class="aset-head">
+    <h3>📈 Portofolio Aset</h3>
+    <button onclick="openAsetForm()" class="filter-btn">＋</button>
+  </div>
+
+  <!-- Summary Card -->
+  <div class="aset-summary">
+    <div class="aset-summary-item">
+      <span>Total Modal</span>
+      <b id="totalModal">Rp 0</b>
+    </div>
+    <div class="aset-summary-item">
+      <span>Nilai Sekarang</span>
+      <b id="totalNilai">Rp 0</b>
+    </div>
+    <div class="aset-summary-item">
+      <span>Profit / Loss</span>
+      <b id="totalPL">Rp 0</b>
+    </div>
+  </div>
+
+  <div id="listAset"></div>
+</div>
+
+<!-- POPUP TAMBAH ASET -->
+<div class="popup" id="popupAset">
+  <div class="popup-box">
+    <h3 id="asetFormTitle">Tambah Aset</h3>
+
+    <input type="text" id="asetNama" placeholder="Nama aset (e.g. BRI, Bitcoin)">
+
+    <select id="asetJenis">
+      <option>Saham</option>
+      <option>Reksa Dana</option>
+      <option>Emas</option>
+      <option>Deposito</option>
+    </select>
+
+    <input type="number" id="asetModal" placeholder="Modal (Rp)">
+    <input type="number" id="asetNilai" placeholder="Nilai sekarang (Rp)">
+    <input type="date" id="asetTanggal">
+    <input type="text" id="asetCatatan" placeholder="Catatan (opsional)">
+
+    <button onclick="simpanAset()">Simpan</button>
+    <button class="btn-close" onclick="closeAsetForm()">Batal</button>
+  </div>
+</div>
   <!-- EXPORT -->
   <button onclick="exportExcel()">📁 Export Excel</button>
 
