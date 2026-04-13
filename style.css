@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  overflow-x: clip;
+  overflow-x: hidden;
   font-family: 'Inter', sans-serif;
   background: #0f172a;
   color: white;
@@ -103,8 +103,6 @@ body {
 .fab {
   position: fixed;
   transition: 0.3s;
-  bottom: 24px;
-  right: 24px;
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -112,6 +110,28 @@ body {
   font-size: 24px;
   z-index: 10000;
   box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
+.report,
+.list {
+  padding-right: 0;
+}
+
+.section {
+  margin-top: 16px;
+}
+
+.report-header {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.report-header {
+  padding-right: 10px;
 }
 
 body.sheet-open .fab {
