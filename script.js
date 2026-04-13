@@ -52,28 +52,23 @@ function tambahData() {
   let kategori = document.getElementById("kategori").value;
   let tipe = document.getElementById("tipe").value;
   let wallet = document.getElementById("wallet").value;
-  let isTransfer = document.getElementById("isTransfer").value;
+  let modeTransfer = document.getElementById("isTransfer").value; // ← GANTI NAMA
 
   if (!nominal) return alert("Isi nominal!");
 
   // ================= EDIT =================
   if (editIndex) {
     db.ref("keuangan/" + editIndex).update({
-      tanggal,
-      nama,
-      nominal,
-      kategori,
-      tipe,
-      wallet
+      tanggal, nama, nominal, kategori, tipe, wallet
     });
-    editIndex = null; // 🔥 WAJIB
+    editIndex = null;
     closeSheet();
-    resetForm(); // 🔥 TAMBAHIN INI
+    resetForm();
     return;
   }
 
   // ================= TRANSFER =================
-  if (isTransfer === "yes") {
+  if (modeTransfer === "yes") { // ← PAKAI modeTransfer
     let from = document.getElementById("fromWallet").value;
     let to = document.getElementById("toWallet").value;
 
@@ -83,20 +78,20 @@ function tambahData() {
     let id2 = generateId();
 
     db.ref("keuangan/" + id1).set({
-      id: id1,
-      tanggal,
+      id: id1, tanggal,
       nama: "Transfer ke " + to,
       nominal,
+      type: "transfer",
       kategori: "Transfer",
       tipe: "keluar",
       wallet: from
     });
 
     db.ref("keuangan/" + id2).set({
-      id: id2,
-      tanggal,
+      id: id2, tanggal,
       nama: "Transfer dari " + from,
       nominal,
+      type: "transfer",
       kategori: "Transfer",
       tipe: "masuk",
       wallet: to
@@ -104,15 +99,8 @@ function tambahData() {
 
   } else {
     let id = generateId();
-
     db.ref("keuangan/" + id).set({
-      id,
-      tanggal,
-      nama,
-      nominal,
-      kategori,
-      tipe,
-      wallet
+      id, tanggal, nama, nominal, kategori, tipe, wallet
     });
   }
 
@@ -169,6 +157,8 @@ function closePopup() {
 // RENDER
 // ============================
 function render(listData = data) {
+
+  // 🚨 FILTER GLOBAL (INI KUNCI)
   currentFilteredData = listData;
 
   let list = document.getElementById("list");
@@ -177,19 +167,22 @@ function render(listData = data) {
   let saldo = 0, masuk = 0, keluar = 0;
   let cash = 0, bank = 0, ewallet = 0;
 
-  listData.forEach(item => {
-    let isMasuk = item.tipe === "masuk";
-
-    saldo += isMasuk ? item.nominal : -item.nominal;
+listData.forEach(item => {
+  let isMasuk = item.tipe === "masuk";
+  
+  // Hanya hitung masuk/keluar kalau BUKAN transfer
+  if (item.type !== "transfer" && item.kategori !== "Transfer") {
     masuk += isMasuk ? item.nominal : 0;
     keluar += !isMasuk ? item.nominal : 0;
+  }
 
-    let val = isMasuk ? item.nominal : -item.nominal;
-
-    if (item.wallet === "Cash") cash += val;
-    if (item.wallet === "Bank") bank += val;
-    if (item.wallet === "E-Wallet") ewallet += val;
-  });
+  // Saldo & wallet tetap dihitung semua (termasuk transfer)
+  saldo += isMasuk ? item.nominal : -item.nominal;
+  let val = isMasuk ? item.nominal : -item.nominal;
+  if (item.wallet === "Cash") cash += val;
+  if (item.wallet === "Bank") bank += val;
+  if (item.wallet === "E-Wallet") ewallet += val;
+});
 
   let start = (currentPage - 1) * itemsPerPage;
   let paginatedData = listData.slice(start, start + itemsPerPage);
@@ -224,7 +217,20 @@ function render(listData = data) {
   document.getElementById("saldoBank").innerText = "Rp " + bank.toLocaleString("id-ID");
   document.getElementById("saldoEwallet").innerText = "Rp " + ewallet.toLocaleString("id-ID");
 
-  renderLaporan(listData);
+let cleanData = listData.filter(item => !isTransfer(item));
+
+// DEBUG — hapus setelah beres
+console.log("RAW DATA:", listData.map(i => ({ 
+  nama: i.nama, 
+  kategori: i.kategori, 
+  type: i.type 
+})));
+console.log("CLEAN DATA:", cleanData.map(i => ({ 
+  nama: i.nama, 
+  kategori: i.kategori 
+})));
+
+renderLaporan(cleanData);
   let totalPages = Math.ceil(listData.length / itemsPerPage);
 
 list.innerHTML += `
@@ -364,9 +370,7 @@ function updateKategori(el) {
 }
 
 function applyFilter() {
-  let filtered = data.filter(item =>
-    selectedKategori.length === 0 || selectedKategori.includes(item.kategori)
-  );
+  let filtered = listData.filter(item => !isTransfer(item));
   currentPage = 1; // 🔥 WAJIB
   render(filtered);
 }
@@ -432,34 +436,30 @@ function renderLaporan(listData) {
   let kategoriKeluar = {};
 
   listData.forEach(item => {
+  if (item.type === "transfer" || 
+      (item.kategori && item.kategori.toLowerCase() === "transfer")) return;
+
     if (item.tipe === "masuk") {
       masuk += item.nominal;
-
-      if (!kategoriMasuk[item.kategori]) {
-        kategoriMasuk[item.kategori] = 0;
-      }
+      if (!kategoriMasuk[item.kategori]) kategoriMasuk[item.kategori] = 0;
       kategoriMasuk[item.kategori] += item.nominal;
-
     } else {
       keluar += item.nominal;
-
-      if (!kategoriKeluar[item.kategori]) {
-        kategoriKeluar[item.kategori] = 0;
-      }
+      if (!kategoriKeluar[item.kategori]) kategoriKeluar[item.kategori] = 0;
       kategoriKeluar[item.kategori] += item.nominal;
     }
   });
 
-  // 🔥 TOTAL
   document.getElementById("totalMasukReport").innerText =
     "Rp " + masuk.toLocaleString("id-ID");
 
   document.getElementById("totalKeluarReport").innerText =
     "Rp " + keluar.toLocaleString("id-ID");
 
-  // 🔥 RENDER DETAIL
   let masukHTML = "";
   for (let k in kategoriMasuk) {
+
+  if (k === "Transfer") continue; // 🔥 WAJIB
     masukHTML += `
       <div class="report-item">
         <span>${k}</span>
@@ -470,6 +470,8 @@ function renderLaporan(listData) {
 
   let keluarHTML = "";
   for (let k in kategoriKeluar) {
+
+  if (k === "Transfer") continue; // 🔥 WAJIB
     keluarHTML += `
       <div class="report-item">
         <span>${k}</span>
@@ -488,6 +490,13 @@ function nextPage(total) {
     currentPage++;
     render(currentFilteredData);
   }
+}
+
+function isTransfer(item) {
+  return (
+    item.type === "transfer" ||
+    (item.kategori && item.kategori.toLowerCase() === "transfer")
+  );
 }
 
 function prevPage() {
