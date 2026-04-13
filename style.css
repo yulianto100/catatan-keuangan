@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
   font-family: 'Inter', sans-serif;
   background: #0f172a;
   color: white;
@@ -8,6 +8,8 @@ body {
 
 .app {
   padding: 16px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .title {
@@ -250,6 +252,8 @@ body.sheet-open .fab {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
   gap: 6px;
 }
 
