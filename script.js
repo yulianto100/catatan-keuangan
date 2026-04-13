@@ -184,6 +184,9 @@ function tambahKategori() {
   let id = generateId();
 
   db.ref("kategori/" + id).set(nama);
+  setTimeout(() => {
+  closeKategori();
+}, 300);
 
   document.getElementById("newKategori").value = "";
   closeModalKategori(); // 🔥 auto close
@@ -640,6 +643,7 @@ function loadKategori() {
     }));
 
     renderKategoriDropdown();
+    renderKategoriList(); // 🔥 INI YANG KURANG
 
 if (kategoriList.length > 0) {
   document.getElementById("kategori").value = kategoriList[0].nama;
