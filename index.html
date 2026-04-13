@@ -40,6 +40,7 @@
     <div class="report-head">
       <h3>📊 Laporan</h3>
       <button onclick="toggleFilter()" class="filter-btn">⚙️</button>
+      <button onclick="openKategoriManager()" class="filter-btn">🗂️</button>
     </div>
 
     <div id="filterPanel" class="filter-panel">
@@ -114,28 +115,7 @@
             <option>Bank</option>
             <option>E-Wallet</option>
           </select>
-
-          <select id="kategori">
-            <option>Bills</option>
-            <option>Clothes</option>
-            <option>Communication</option>
-            <option>Eating Out</option>
-            <option>Entertainment</option>
-            <option>Food</option>
-            <option>Gifts</option>
-            <option>Health</option>
-            <option>House</option>
-            <option>Nafkah</option>
-            <option>Jajan Mas</option>
-            <option>Motorcycle</option>
-            <option>Sports</option>
-            <option>Toiletry</option>
-            <option>Transport</option>
-            <option>Deposits</option>
-            <option>Salary</option>
-            <option>Saving</option>
-          </select>
-
+          <select id="kategori"></select>
           <select id="tipe">
             <option value="masuk">Pemasukan</option>
             <option value="keluar">Pengeluaran</option>
@@ -195,6 +175,20 @@
       <button class="btn-close" onclick="closePopup()">Batal</button>
     </div>
   </div>
+
+  <div class="popup" id="popupKategori">
+  <div class="popup-box">
+    <h3>Kelola Kategori</h3>
+
+    <input type="text" id="newKategori" placeholder="Nama kategori">
+
+    <button onclick="tambahKategori()">Tambah</button>
+
+    <div id="listKategori"></div>
+
+    <button class="btn-close" onclick="closeKategori()">Tutup</button>
+  </div>
+</div>
 
 </div>
 
