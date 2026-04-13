@@ -123,11 +123,11 @@ body {
 }
 
 .section {
-  background: #48c57a;
-  border: 1px solid #22c55e;
+  background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.1));
+border: 1px solid rgba(255,255,255,0.1);
+backdrop-filter: blur(12px);
   border-radius: 18px;
   padding: 14px;
-  backdrop-filter: blur(10px);
 }
 
 
