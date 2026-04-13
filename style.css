@@ -123,12 +123,11 @@ body {
 }
 
 .section {
-  margin-top: 12px; /* lebih rapih antar section */
-  background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.1));
-border: 1px solid rgba(255,255,255,0.1);
-backdrop-filter: blur(12px);
+  background: #48c57a;
+  border: 1px solid #22c55e;
   border-radius: 18px;
   padding: 14px;
+  backdrop-filter: blur(10px);
 }
 
 
