@@ -4,6 +4,7 @@ let selectedKategori = [];
 let editIndex = null;
 let currentFilteredData = [];
 let kategoriList = [];
+let editAsetId = null;
 
 let currentPage = 1;
 let itemsPerPage = 7;
@@ -31,6 +32,7 @@ function loadData() {
 
 window.onload = () => {
   loadData();
+  loadAset();
 
   let tgl = document.getElementById("tanggal");
   if (tgl) tgl.valueAsDate = new Date();
@@ -241,6 +243,143 @@ function closePopup() {
   popup.style.display = "none";
   popup.classList.remove("active");     // 🔥 bersihkan class
   popup.style.pointerEvents = "none";
+}
+
+// Load & Render
+function loadAset() {
+  db.ref("investasi").on("value", snapshot => {
+    let val = snapshot.val() || {};
+    let asetData = Object.keys(val).map(key => ({ ...val[key], firebaseKey: key }));
+    renderAset(asetData);
+  });
+}
+
+function renderAset(asetData) {
+  let totalModal = 0, totalNilai = 0;
+  let listEl = document.getElementById("listAset");
+  listEl.innerHTML = "";
+
+  // Icon per jenis
+  const icon = {
+    "Saham": "📈", "Reksa Dana": "💼", "Emas": "🥇",
+    "Crypto": "🪙", "Properti": "🏠", "Deposito": "🏦", "Lainnya": "📦"
+  };
+
+  asetData.forEach(aset => {
+    totalModal += aset.modal || 0;
+    totalNilai += aset.nilai || 0;
+
+    let pl = (aset.nilai || 0) - (aset.modal || 0);
+    let plPersen = aset.modal ? ((pl / aset.modal) * 100).toFixed(1) : 0;
+    let plClass = pl >= 0 ? "pl-positif" : "pl-negatif";
+    let plSign = pl >= 0 ? "+" : "";
+
+    listEl.innerHTML += `
+      <div class="aset-card" onclick="editAset('${aset.firebaseKey}')">
+        <div class="aset-card-top">
+          <div class="aset-card-left">
+            <strong>${icon[aset.jenis] || "📦"} ${aset.nama}</strong><br>
+            <span class="aset-badge">${aset.jenis}</span>
+          </div>
+          <div class="${plClass}" style="text-align:right">
+            <div style="font-size:13px">${plSign}Rp ${pl.toLocaleString("id-ID")}</div>
+            <div style="font-size:11px;opacity:0.7">${plSign}${plPersen}%</div>
+          </div>
+        </div>
+
+        <div class="aset-card-bottom">
+          <div class="aset-row">
+            <span>Modal</span>
+            <b>Rp ${aset.modal.toLocaleString("id-ID")}</b>
+          </div>
+          <div class="aset-row" style="text-align:right">
+            <span>Nilai Kini</span>
+            <b>Rp ${aset.nilai.toLocaleString("id-ID")}</b>
+          </div>
+        </div>
+
+        <div class="aset-actions">
+          <button onclick="event.stopPropagation(); editAset('${aset.firebaseKey}')">✏️ Edit</button>
+          <button class="btn-close" onclick="event.stopPropagation(); hapusAset('${aset.firebaseKey}')">🗑️ Hapus</button>
+        </div>
+      </div>
+    `;
+  });
+
+  // Update summary
+  let pl = totalNilai - totalModal;
+  let plClass = pl >= 0 ? "pl-positif" : "pl-negatif";
+
+  document.getElementById("totalModal").innerText = "Rp " + totalModal.toLocaleString("id-ID");
+  document.getElementById("totalNilai").innerText = "Rp " + totalNilai.toLocaleString("id-ID");
+  document.getElementById("totalPL").innerHTML =
+    `<span class="${plClass}">${pl >= 0 ? "+" : ""}Rp ${pl.toLocaleString("id-ID")}</span>`;
+}
+
+// Form
+function openAsetForm() {
+  editAsetId = null;
+  document.getElementById("asetFormTitle").innerText = "Tambah Aset";
+  document.getElementById("asetNama").value = "";
+  document.getElementById("asetModal").value = "";
+  document.getElementById("asetNilai").value = "";
+  document.getElementById("asetCatatan").value = "";
+  document.getElementById("asetTanggal").valueAsDate = new Date();
+
+  let popup = document.getElementById("popupAset");
+  popup.style.display = "flex";
+  popup.classList.add("active");
+  popup.style.pointerEvents = "auto";
+}
+
+function closeAsetForm() {
+  let popup = document.getElementById("popupAset");
+  popup.style.display = "none";
+  popup.classList.remove("active");
+  popup.style.pointerEvents = "none";
+}
+
+function simpanAset() {
+  let nama = document.getElementById("asetNama").value;
+  let jenis = document.getElementById("asetJenis").value;
+  let modal = parseInt(document.getElementById("asetModal").value);
+  let nilai = parseInt(document.getElementById("asetNilai").value);
+  let tanggal = document.getElementById("asetTanggal").value;
+  let catatan = document.getElementById("asetCatatan").value;
+
+  if (!nama || !modal || !nilai) return alert("Isi nama, modal, dan nilai!");
+
+  let payload = { nama, jenis, modal, nilai, tanggal, catatan };
+
+  if (editAsetId) {
+    db.ref("investasi/" + editAsetId).update(payload);
+  } else {
+    let id = generateId();
+    db.ref("investasi/" + id).set({ id, ...payload });
+  }
+
+  closeAsetForm();
+}
+
+function editAset(key) {
+  db.ref("investasi/" + key).once("value", snap => {
+    let a = snap.val();
+    editAsetId = key;
+    document.getElementById("asetFormTitle").innerText = "Edit Aset";
+    document.getElementById("asetNama").value = a.nama;
+    document.getElementById("asetJenis").value = a.jenis;
+    document.getElementById("asetModal").value = a.modal;
+    document.getElementById("asetNilai").value = a.nilai;
+    document.getElementById("asetTanggal").value = a.tanggal;
+    document.getElementById("asetCatatan").value = a.catatan || "";
+    openAsetForm();
+  });
+}
+
+function hapusAset(key) {
+  if (confirm("Hapus aset ini?")) {
+    db.ref("investasi/" + key).remove();
+  }
 }
 
 // ============================
