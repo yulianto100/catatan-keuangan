@@ -200,13 +200,15 @@ body.sheet-open .fab {
 }
 
 #popupKategori .popup-box {
-  max-height: 80vh;      /* tinggi maksimal popup */
+  width: 90%;
+  max-height: 85vh;      /* tinggi maksimal popup */
   overflow: hidden;      /* biar rapi */
   display: flex;
   flex-direction: column;
 }
 
 #listKategori {
+  flex: 1;
   overflow-y: auto;      /* 🔥 INI KUNCI */
   max-height: 50vh;      /* area list bisa scroll */
   padding-right: 6px;
