@@ -64,21 +64,22 @@
     </div>
 
 <div class="report-header" onclick="toggleMasuk()">
-  <div>⬆️ Pemasukan</div>
-  <div style="white-space:nowrap; flex-shrink:0; min-width:fit-content">
-    <b id="totalMasukReport">Rp 0</b> ▼
+  <div class="report-header-left">
+    <span>⬆️ Pemasukan</span>
+    <b id="totalMasukReport" class="text-masuk">Rp 0</b>
   </div>
+  <span id="arrowMasuk">▼</span>
 </div>
 
 <div id="laporanMasuk" style="display:none"></div>
 
 <div class="report-header" onclick="toggleKeluar()">
-  <div>⬇️ Pengeluaran</div>
-  <div style="white-space:nowrap; flex-shrink:0; min-width:fit-content">
-    <b id="totalKeluarReport">Rp 0</b> ▼
+  <div class="report-header-left">
+    <div>⬇️ Pengeluaran</div>
+    <b id="totalKeluarReport" class="text-keluar">Rp 0</b>
   </div>
+  <span id="arrowKeluar">▼</span>
 </div>
-
 <div id="laporanKeluar" style="display:none"></div>
   </div>
 </div>
