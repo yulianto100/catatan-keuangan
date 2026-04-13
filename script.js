@@ -175,13 +175,6 @@ function closeKategori() {
   el.style.pointerEvents = "none"; // 🔥 INI KUNCI
 }
 
-function closeAllPopup() {
-  document.querySelectorAll(".popup").forEach(p => {
-    p.classList.remove("active");
-    p.style.display = "none";
-    p.style.pointerEvents = "none";
-  });
-}
 
 function tambahKategori() {
   let nama = document.getElementById("newKategori").value;
