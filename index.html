@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Keuangan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#22c55e">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+  <h2 class="title">💰 Keuangan</h2>
+
+  <!-- SALDO -->
+  <div class="saldo-card">
+    <div class="saldo-top">Saldo</div>
+    <div class="saldo-main" id="saldo">Rp 0</div>
+
+    <div class="saldo-detail">
+      <div>⬆️ <span id="totalMasuk">Rp 0</span></div>
+      <div>⬇️ <span id="totalKeluar">Rp 0</span></div>
+    </div>
+  </div>
+
+  <!-- WALLET -->
+  <div class="wallet-saldo">
+    <div>💵 Cash: <span id="saldoCash">Rp 0</span></div>
+    <div>🏦 Bank: <span id="saldoBank">Rp 0</span></div>
+    <div>📱 E-Wallet: <span id="saldoEwallet">Rp 0</span></div>
+  </div>
+<div class="section">
+  <!-- LAPORAN -->
+  <div class="report">
+    <div class="report-head">
+      <h3>📊 Laporan</h3>
+      <button onclick="toggleFilter()" class="filter-btn">⚙️</button>
+      <button onclick="openKategoriManager()" class="filter-btn">🗂️</button>
+    </div>
+
+    <div id="filterPanel" class="filter-panel">
+      <label>Dari Bulan</label>
+      <input type="month" id="fromMonth">
+
+      <label>Sampai Bulan</label>
+      <input type="month" id="toMonth">
+
+      <label>Kategori</label>
+
+      <div class="filter-actions">
+        <button onclick="selectAllKategori()">All</button>
+        <button onclick="clearAllKategori()">Clear</button>
+      </div>
+
+      <div id="filterKategori" class="kategori-container"></div>
+
+      <button onclick="applyFilter()">Terapkan</button>
+      <button class="btn-close" onclick="resetFilter()">Reset</button>
+    </div>
+
+<div class="report-header" onclick="toggleMasuk()">
+  <div class="report-header-left">
+    <span>⬆️ Pemasukan</span>
+    <b id="totalMasukReport" class="text-masuk">Rp 0</b>
+  </div>
+  <span id="arrowMasuk">▼</span>
+</div>
+
+<div id="laporanMasuk" style="display:none"></div>
+
+<div class="report-header" onclick="toggleKeluar()">
+  <div class="report-header-left">
+    <div>⬇️ Pengeluaran</div>
+    <b id="totalKeluarReport" class="text-keluar">Rp 0</b>
+  </div>
+  <span id="arrowKeluar">▼</span>
+</div>
+<div id="laporanKeluar" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ASET / INVESTASI -->
+<div class="section">
+  <div class="aset-head">
+    <h3>📈 Portofolio Aset</h3>
+    <button onclick="openAsetForm()" class="filter-btn">＋</button>
+  </div>
+
+  <!-- Summary Card -->
+  <div class="aset-summary">
+    <div class="aset-summary-item">
+      <span>Total Modal</span>
+      <b id="totalModal">Rp 0</b>
+    </div>
+    <div class="aset-summary-item">
+      <span>Nilai Sekarang</span>
+      <b id="totalNilai">Rp 0</b>
+    </div>
+    <div class="aset-summary-item">
+      <span>Profit / Loss</span>
+      <b id="totalPL">Rp 0</b>
+    </div>
+  </div>
+
+  <div id="listAset"></div>
+</div>
+
+<!-- POPUP TAMBAH ASET -->
+<div class="popup" id="popupAset">
+  <div class="popup-box">
+    <h3 id="asetFormTitle">Tambah Aset</h3>
+
+    <input type="text" id="asetNama" placeholder="Nama aset (e.g. BRI, Bitcoin)">
+
+    <select id="asetJenis">
+      <option>Saham</option>
+      <option>Reksa Dana</option>
+      <option>Emas</option>
+      <option>Deposito</option>
+    </select>
+
+    <input type="number" id="asetModal" placeholder="Modal (Rp)">
+    <input type="number" id="asetNilai" placeholder="Nilai sekarang (Rp)">
+    <input type="date" id="asetTanggal">
+    <input type="text" id="asetCatatan" placeholder="Catatan (opsional)">
+
+    <button onclick="simpanAset()">Simpan</button>
+    <button class="btn-close" onclick="closeAsetForm()">Batal</button>
+  </div>
+</div>
+  <!-- EXPORT -->
+  <button onclick="exportExcel()">📁 Export Excel</button>
+
+  <!-- LIST -->
+  <div id="list" class="list"></div>
+
+  <!-- FAB -->
+  <button class="fab" onclick="openTypePopup()">＋</button>
+
+  <!-- SHEET -->
+  <div class="sheet" id="sheet">
+    <div class="sheet-box">
+
+      <div class="drag-bar" id="dragBar"></div>
+
+      <div class="sheet-header">
+        <h3 id="formTitle">Tambah Transaksi</h3>
+      </div>
+
+      <div class="sheet-content">
+
+        <input type="date" id="tanggal">
+        <input type="text" id="nama" placeholder="Keterangan" onblur="this.value = capitalizeWords(this.value)">
+        <input type="number" id="nominal" placeholder="Nominal">
+
+        <select id="isTransfer" onchange="toggleTransfer()">
+          <option value="no">Transaksi Biasa</option>
+          <option value="yes">Transfer Antar Wallet</option>
+        </select>
+
+        <!-- 🔥 NORMAL FIELD -->
+        <div id="normalField">
+          <select id="wallet">
+            <option>Cash</option>
+            <option>Bank</option>
+            <option>E-Wallet</option>
+          </select>
+          <select id="kategori"></select>
+          <select id="tipe">
+            <option value="masuk">Pemasukan</option>
+            <option value="keluar">Pengeluaran</option>
+          </select>
+        </div>
+
+        <!-- 🔥 TRANSFER -->
+        <div id="transferBox" style="display:none">
+          <label>Dari Wallet</label>
+          <select id="fromWallet">
+            <option>Cash</option>
+            <option>Bank</option>
+            <option>E-Wallet</option>
+          </select>
+
+          <label>Ke Wallet</label>
+          <select id="toWallet">
+            <option>Cash</option>
+            <option>Bank</option>
+            <option>E-Wallet</option>
+          </select>
+        </div>
+
+        <button onclick="tambahData()">Simpan</button>
+        <button class="btn-close" onclick="closeSheet()">Tutup</button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP TYPE -->
+  <div class="popup" id="popupType">
+    <div class="popup-box">
+
+      <h3>Pilih Jenis Transaksi</h3>
+
+      <button onclick="openForm('normal')" class="btn-primary">
+        💸 Transaksi Biasa
+      </button>
+
+      <button onclick="openForm('transfer')" class="btn-secondary">
+        🔁 Transfer Antar Wallet
+      </button>
+
+      <button class="btn-close" onclick="closeTypePopup()">
+        Batal
+      </button>
+
+    </div>
+  </div>
+
+  <!-- POPUP DELETE -->
+  <div class="popup" id="popup">
+    <div class="popup-box">
+      <p>Hapus transaksi ini?</p>
+      <button onclick="confirmDelete()">Hapus</button>
+      <button class="btn-close" onclick="closePopup()">Batal</button>
+    </div>
+  </div>
+
+  <div class="popup" id="popupKategori">
+  <div class="popup-box">
+    <h3>Kelola Kategori</h3>
+
+    <input type="text" id="newKategori" placeholder="Nama kategori">
+
+    <button onclick="tambahKategori()">Tambah</button>
+
+    <div id="listKategori"></div>
+
+    <button class="btn-close" onclick="closeKategori()">Tutup</button>
+  </div>
+</div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "catatan-keuangan-37194.firebaseapp.com",
+  databaseURL: "https://catatan-keuangan-37194-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "catatan-keuangan-37194",
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="script.js"></script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js');
+}
+</script>
+
+</body>
+</html>
