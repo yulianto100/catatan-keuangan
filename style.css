@@ -278,6 +278,28 @@ body.sheet-open .fab {
   }
 }
 
+.aset-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* default hidden */
+.aset-detail {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+/* kalau dibuka */
+.aset-detail.open {
+  max-height: 300px;
+  opacity: 1;
+  margin-top: 10px;
+}
+
 .report-header:hover {
   background: rgba(255, 255, 255, 0.09);
   border-color: rgba(255, 255, 255, 0.15);

@@ -286,35 +286,42 @@ function renderAset(asetData) {
     let plSign = pl >= 0 ? "+" : "";
 
     listEl.innerHTML += `
-      <div class="aset-card" onclick="editAset('${aset.firebaseKey}')">
-        <div class="aset-card-top">
-          <div class="aset-card-left">
-            <strong>${icon[aset.jenis] || "📦"} ${aset.nama}</strong><br>
-            <span class="aset-badge">${aset.jenis}</span>
-          </div>
-          <div class="${plClass}" style="text-align:right">
-            <div style="font-size:13px">${plSign}Rp ${pl.toLocaleString("id-ID")}</div>
-            <div style="font-size:11px;opacity:0.7">${plSign}${plPersen}%</div>
-          </div>
-        </div>
+  <div class="aset-card">
 
-        <div class="aset-card-bottom">
-          <div class="aset-row">
-            <span>Modal</span>
-            <b>Rp ${aset.modal.toLocaleString("id-ID")}</b>
-          </div>
-          <div class="aset-row" style="text-align:right">
-            <span>Nilai Kini</span>
-            <b>Rp ${aset.nilai.toLocaleString("id-ID")}</b>
-          </div>
-        </div>
+    <!-- HEADER (SELALU KELIATAN) -->
+    <div class="aset-header" onclick="toggleAset('${aset.firebaseKey}')">
+      <div class="aset-card-left">
+        <strong>${icon[aset.jenis] || "📦"} ${aset.nama}</strong>
+        <span class="aset-badge">${aset.jenis}</span>
+      </div>
 
-        <div class="aset-actions">
-          <button onclick="event.stopPropagation(); editAset('${aset.firebaseKey}')">✏️ Edit</button>
-          <button class="btn-close" onclick="event.stopPropagation(); hapusAset('${aset.firebaseKey}')">🗑️ Hapus</button>
+      <div class="${plClass}" style="text-align:right">
+        <div style="font-size:13px">${plSign}Rp ${pl.toLocaleString("id-ID")}</div>
+        <div style="font-size:11px;opacity:0.7">${plSign}${plPersen}%</div>
+      </div>
+    </div>
+
+    <!-- DETAIL (HIDDEN) -->
+    <div class="aset-detail" id="aset-${aset.firebaseKey}">
+      <div class="aset-card-bottom">
+        <div class="aset-row">
+          <span>Modal</span>
+          <b>Rp ${aset.modal.toLocaleString("id-ID")}</b>
+        </div>
+        <div class="aset-row" style="text-align:right">
+          <span>Nilai Kini</span>
+          <b>Rp ${aset.nilai.toLocaleString("id-ID")}</b>
         </div>
       </div>
-    `;
+
+      <div class="aset-actions">
+        <button onclick="event.stopPropagation(); editAset('${aset.firebaseKey}')">✏️ Edit</button>
+        <button class="btn-close" onclick="event.stopPropagation(); hapusAset('${aset.firebaseKey}')">🗑️ Hapus</button>
+      </div>
+    </div>
+
+  </div>
+  `;
   });
 
   // Update summary
@@ -348,6 +355,16 @@ function closeAsetForm() {
   popup.style.display = "none";
   popup.classList.remove("active");
   popup.style.pointerEvents = "none";
+}
+
+function toggleAset(id) {
+  let el = document.getElementById("aset-" + id);
+
+  if (el.classList.contains("open")) {
+    el.classList.remove("open");
+  } else {
+    el.classList.add("open");
+  }
 }
 
 function simpanAset() {
