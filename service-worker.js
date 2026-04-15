@@ -1,4 +1,4 @@
-const CACHE_NAME = "keuangan-app-v7";
+const CACHE_NAME = "keuangan-app-v7.1";
 
 const URLS = [
   "/",
