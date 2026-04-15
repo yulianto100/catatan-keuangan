@@ -250,8 +250,11 @@ body.sheet-open .fab {
 
 .report-header-left {
   display: flex;
-  flex-direction: column;  /* label di atas, nominal di bawah */
+  flex-direction: column;
   gap: 2px;
+
+  flex: 1;        /* 🔥 WAJIB */
+  min-width: 0;   /* 🔥 INI KUNCI IPHONE */
 }
 
 .report-header {
@@ -266,6 +269,13 @@ body.sheet-open .fab {
   align-items: center !important;
   cursor: pointer;
   transition: all 0.2s ease;
+  gap: 10px;
+}
+
+@media (max-width: 380px) {
+  .report-header-left b {
+    font-size: 14px;
+  }
 }
 
 .report-header:hover {
@@ -292,11 +302,13 @@ body.sheet-open .fab {
   text-overflow: ellipsis;
 }
 
-/* Pastikan nominal tidak terpotong */
 .report-header-left b {
-  font-size: 18px;
+  font-size: 16px; /* sedikit kecil biar aman */
   font-weight: 700;
+
   white-space: nowrap;
+  overflow: visible;       /* 🔥 penting */
+  text-overflow: unset;    /* 🔥 penting */
 } 
 
 .report-header.masuk .report-header-left b {
