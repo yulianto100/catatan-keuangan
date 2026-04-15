@@ -1,5 +1,5 @@
 <<<<<<< HEAD
-const CACHE_NAME = "keuangan-app-v5.6";
+const CACHE_NAME = "keuangan-app-v6";
 
 self.addEventListener("install", event => {
   self.skipWaiting();
