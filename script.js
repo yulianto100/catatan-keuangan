@@ -447,23 +447,37 @@ listData.forEach(item => {
   paginatedData.forEach(item => {
     let warna = item.tipe === "masuk" ? "#22c55e" : "#ef4444";
 
-    list.innerHTML += `
-      <div class="item" onclick="editDataById('${item.firebaseKey}')">
-        <div>
-          <b>${item.nama}</b><br>
-          <small>${item.kategori} • ${item.tanggal}</small>
-        </div>
+list.innerHTML += `
+  <div class="item" onclick="toggleItem('${item.firebaseKey}')">
 
-        <div style="text-align:right">
-          <div style="color:${warna}">
-            Rp ${item.nominal.toLocaleString("id-ID")}
-          </div>
-          <button onclick="event.stopPropagation(); openDelete('${item.firebaseKey}')">
-            Hapus
-          </button>
-        </div>
+    <div class="item-row">
+
+      <div class="item-left">
+        <div class="item-title">${item.nama}</div>
       </div>
-    `;
+
+      <div class="item-right" style="color:${warna}">
+        Rp ${item.nominal.toLocaleString("id-ID")}
+      </div>
+
+    </div>
+
+    <!-- DETAIL HARUS DI DALAM ITEM -->
+    <div class="item-detail" id="detail-${item.firebaseKey}">
+      
+      <div class="item-sub">
+        ${item.kategori} • ${item.tanggal}
+      </div>
+
+      <div class="item-actions">
+        <button onclick="event.stopPropagation(); editDataById('${item.firebaseKey}')">Edit</button>
+        <button onclick="event.stopPropagation(); openDelete('${item.firebaseKey}')">Hapus</button>
+      </div>
+
+    </div>
+
+  </div>
+`;
   });
 
   document.getElementById("saldo").innerText = "Rp " + saldo.toLocaleString("id-ID");
@@ -519,6 +533,17 @@ function closeTypePopup() {
 
   // 🔥 TAMBAHAN WAJIB
   el.style.pointerEvents = "none";
+}
+
+function toggleItem(id) {
+  document.querySelectorAll(".item-detail").forEach(el => {
+    if (el.id !== "detail-" + id) {
+      el.classList.remove("open");
+    }
+  });
+
+  let el = document.getElementById("detail-" + id);
+  el.classList.toggle("open");
 }
 
 function openForm(type) {
