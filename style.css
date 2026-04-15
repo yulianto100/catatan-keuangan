@@ -598,6 +598,7 @@ body::before {
   inset: 0;
   background: radial-gradient(circle at top, rgba(255,255,255,0.2), transparent);
   pointer-events: none;
+  
 }
 
 #filterKategori label {
